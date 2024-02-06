@@ -7,7 +7,7 @@ Entity Player_create(Game *game) {
     Entity entity;
     entity.x = 0;
     entity.y = 0;
-    entity.radius = game->tile_size / 2;
+    entity.radius = game->tile_size / 4;
     entity.speed = 0;
     entity.color = YELLOW;
     entity.type = 0;

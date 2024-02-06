@@ -85,7 +85,7 @@ int main(void)
     game.screen_w = 800;
     game.screen_h = 450;
     game.scale = 1;
-    game.tile_size = 16;
+    game.tile_size = 32;
 
     Map map = Map_create(400, 400);
 
@@ -96,14 +96,14 @@ int main(void)
     // Render perlin noise
     for (int y = 0; y < map.h; y++) {
 	for (int x = 0; x < map.w; x++) {
-	    float tile = perlin2d(x, y, 0.009, 4, seed);
+	    float tile = perlin2d(x, y, 0.0075, 6, seed);
 	    int tile_index = (y * map.w) + x;
 	    int tile_type;
 	    if (tile < 0.55) {
 		tile_type = WATER;
 	    } else if (tile < 0.6) {
 		tile_type = SAND;
-	    } else if (tile < 0.7) {
+	    } else if (tile < 0.8) {
 		int chance = GetRandomValue(0, 100);
 		if (chance == 0) {
 		    tile_type = TREE;
