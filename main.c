@@ -170,7 +170,6 @@ int main(void)
     }
     memcpy(tiles, new_tiles, sizeof(tiles));
 
-
     InitWindow(game.screen_w, game.screen_h, "Mango Mango Monsters");
 
     SetTargetFPS(60);            // Set our game to run at 60 frames-per-second
@@ -206,6 +205,8 @@ int main(void)
 	if (IsKeyDown(KEY_RIGHT)) player.x += 2;
 	if (IsKeyDown(KEY_UP)) player.y -= 2;
 	if (IsKeyDown(KEY_DOWN)) player.y += 2;
+	if (IsKeyPressed(KEY_W)) camera.zoom += 0.0625;
+	if (IsKeyPressed(KEY_S)) camera.zoom -= 0.0625;
 
 	camera.target = (Vector2){player.x, player.y};
         camera.offset = (Vector2){game.screen_w / 2, game.screen_h / 2};
