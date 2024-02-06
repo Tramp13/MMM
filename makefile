@@ -4,7 +4,7 @@ CC = gcc
 
 #COMPILER_FLAGS = -w
 
-LINKER_FLAGS = -lraylib
+LINKER_FLAGS = -lraylib -lm
 
 OBJ_NAME = main
 

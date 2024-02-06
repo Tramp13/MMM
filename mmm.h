@@ -5,6 +5,21 @@
 
 #define MAX_BEINGS 50
 
+enum Tile {
+    WATER,
+    SAND,
+    GRASS,
+    TREE,
+    NW_SAND_SE_WATER,
+    NE_SAND_SW_WATER,
+    SW_SAND_NE_WATER,
+    SE_SAND_NW_WATER,
+    NW_GRASS_SE_SAND,
+    NE_GRASS_SW_SAND,
+    SW_GRASS_NE_SAND,
+    SE_GRASS_NW_SAND
+};
+
 typedef struct GameStruct Game;
 struct GameStruct {
     int screen_w;
