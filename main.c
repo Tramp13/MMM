@@ -179,6 +179,18 @@ int main(void)
     player.x = 0;
     player.y = 0;
 
+    //find free space for player
+    bool player_pos_found = false;
+    while (!player_pos_found) {
+	int x = GetRandomValue(0, map.w - 1);
+	int y = GetRandomValue(0, map.h - 1);
+	if (tiles[(y * map.w) + x] == GRASS) {
+	    player.x = x * game.tile_size;
+	    player.y = y * game.tile_size;
+	    player_pos_found = true;
+	}
+    }
+
     Camera2D camera = { 0 };
     camera.target = (Vector2){player.x, player.y};
     camera.offset = (Vector2){game.screen_w / 2, game.screen_h / 2};
