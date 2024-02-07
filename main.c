@@ -103,7 +103,7 @@ int main(void)
 		tile_type = WATER;
 	    } else if (tile < 0.6) {
 		tile_type = SAND;
-	    } else if (tile < 0.8) {
+	    } else if (tile < 0.65) {
 		int chance = GetRandomValue(0, 100);
 		if (chance == 0) {
 		    tile_type = TREE;
@@ -111,9 +111,9 @@ int main(void)
 		    tile_type = GRASS;
 		}
 	    } else {
-		int chance = GetRandomValue(0, 2);
+		int chance = GetRandomValue(0, 100);
 		printf("%d\n", chance);
-		if (chance == 0) {
+		if (chance < 40) {
 		    tile_type = TREE;
 		} else {
 		    tile_type = GRASS;
@@ -123,8 +123,39 @@ int main(void)
 	}
     }
 
-    // Soften corners
+    //smooth forests
     int new_tiles[map.w * map.h];
+    int iterations_left = 2;
+    while (iterations_left > 0) {
+        memcpy(new_tiles, tiles, sizeof(tiles));
+        for (int y = 0; y < map.h; y++) {
+            for (int x = 0; x < map.w; x++) {
+                int tile_index = (y * map.w) + x;
+                bool is_border = (x == 0 || y == 0 ||
+                                  x == map.w - 1 || y == map.h - 1);
+                if (!is_border) {
+                    int wall_neighbors = 0;
+                    for (int dy = y - 1; dy < y + 2; dy++) {
+                        for (int dx = x - 1; dx < x + 2; dx++) {
+                            int delta_tile_index = (dy * map.w) + dx;
+                            if (tiles[delta_tile_index] == TREE) wall_neighbors++;
+                        }
+                    }
+                    if (tiles[tile_index] == TREE && wall_neighbors < 4) {
+                        new_tiles[tile_index] = GRASS;
+                    }
+                    if (tiles[tile_index] == GRASS && wall_neighbors >= 5) {
+                        new_tiles[tile_index] = TREE;
+                    }
+                }
+            }
+        }
+        memcpy(tiles, new_tiles, sizeof(tiles));
+        iterations_left--;
+        printf("cool\n");
+    }
+
+    // Soften corners
     memcpy(new_tiles, tiles, sizeof(tiles));
     for (int y = 0; y < map.h; y++) {
 	for (int x = 0; x < map.w; x++) {
@@ -195,18 +226,21 @@ int main(void)
     camera.offset = (Vector2){game.screen_w / 2, game.screen_h / 2};
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
+    int speed = 2;
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         // TODO: Update your variables here
-	if (IsKeyDown(KEY_LEFT)) player.x -= 2;
-	if (IsKeyDown(KEY_RIGHT)) player.x += 2;
-	if (IsKeyDown(KEY_UP)) player.y -= 2;
-	if (IsKeyDown(KEY_DOWN)) player.y += 2;
+	if (IsKeyDown(KEY_LEFT)) player.x -= speed;
+	if (IsKeyDown(KEY_RIGHT)) player.x += speed;
+	if (IsKeyDown(KEY_UP)) player.y -= speed;
+	if (IsKeyDown(KEY_DOWN)) player.y += speed;
 	if (IsKeyPressed(KEY_W)) camera.zoom += 0.0625;
 	if (IsKeyPressed(KEY_S)) camera.zoom -= 0.0625;
+	if (IsKeyPressed(KEY_A)) speed -= 2;
+	if (IsKeyPressed(KEY_D)) speed += 2;
 
 	camera.target = (Vector2){player.x, player.y};
         camera.offset = (Vector2){game.screen_w / 2, game.screen_h / 2};
