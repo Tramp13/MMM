@@ -305,8 +305,9 @@ int main(void)
 			 y * game.tile_size};
 		    DrawRectangle(x * game.tile_size, y * game.tile_size,
 			          game.tile_size, game.tile_size, GREEN);
-		    DrawRectangle(x * game.tile_size, y * game.tile_size,
-			          game.tile_size, game.tile_size / 2,
+		    DrawRectangle((x * game.tile_size) + 2, 
+                                  (y * game.tile_size) + 2,
+			          game.tile_size - 4, game.tile_size / 2,
 				  DARKGREEN);
 		    DrawRectangle((x * game.tile_size) + game.tile_size / 4,
 				  (y * game.tile_size) + game.tile_size / 2,
