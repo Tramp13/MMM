@@ -113,7 +113,7 @@ int main(void)
 	    } else {
 		int chance = GetRandomValue(0, 100);
 		printf("%d\n", chance);
-		if (chance < 40) {
+		if (chance < 45) {
 		    tile_type = TREE;
 		} else {
 		    tile_type = GRASS;
@@ -138,7 +138,9 @@ int main(void)
                     for (int dy = y - 1; dy < y + 2; dy++) {
                         for (int dx = x - 1; dx < x + 2; dx++) {
                             int delta_tile_index = (dy * map.w) + dx;
-                            if (tiles[delta_tile_index] == TREE) wall_neighbors++;
+                            if (tiles[delta_tile_index] == TREE &&
+                                delta_tile_index != tile_index)
+                                wall_neighbors++;
                         }
                     }
                     if (tiles[tile_index] == TREE && wall_neighbors < 4) {
@@ -154,6 +156,30 @@ int main(void)
         iterations_left--;
         printf("cool\n");
     }
+
+    // Hide redundant trees
+    memcpy(new_tiles, tiles, sizeof(tiles));
+    for (int y = 1; y < map.h - 1; y++) {
+	for (int x = 1; x < map.w - 1; x++) {
+	    int tile_index = (y * map.w) + x;
+            int tile = tiles[tile_index];
+	    if (tile == TREE) {
+                int north_y = y - 1;
+                int east_x = x + 1;
+                int south_y = y + 1;
+                int west_x = x - 1;
+                int north_tile = tiles[(north_y * map.w) + x];
+                int east_tile = tiles[(y * map.w) + east_x];
+                int south_tile = tiles[(south_y * map.w) + x];
+                int west_tile = tiles[(y * map.w) + west_x];
+                if (north_tile == TREE && east_tile == TREE &&
+                    south_tile == TREE && west_tile == TREE) {
+                    new_tiles[tile_index] = DEEP_TREE;
+                }
+	    }
+	}
+    }
+    memcpy(tiles, new_tiles, sizeof(tiles));
 
     // Soften corners
     memcpy(new_tiles, tiles, sizeof(tiles));
@@ -293,7 +319,7 @@ int main(void)
 		} else if (tile_type == GRASS) {
 		    color = GREEN;
 		} else {
-		    color = GREEN;
+		    color = BLACK;
 		}
 		if (tile_type == TREE) {
 		    Vector2 a, b, c;

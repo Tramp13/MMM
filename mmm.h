@@ -10,6 +10,7 @@ enum Tile {
     SAND,
     GRASS,
     TREE,
+    DEEP_TREE,
     NW_SAND_SE_WATER,
     NE_SAND_SW_WATER,
     SW_SAND_NE_WATER,
