@@ -1,7 +1,9 @@
 #include "raylib.h"
+#include "raymath.h"
 #include "mmm.h"
 #include "perlin.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <string.h>
 
@@ -49,33 +51,6 @@ void drawSlantTileSE(int tile_x, int tile_y, int tile_size, Color color) {
 	DrawTriangle(a, b, c, color);
 }
 
-int getNorthTile(int x, int y, int tiles[], int map_w, int map_h) {
-    if (y > 0) {
-	return tiles[((y - 1) * map_w) + x];
-    }
-    return 0;
-}
-
-int getEastTile(int x, int y, int tiles[], int map_w, int map_h) {
-    if (x < map_w - 1) {
-	return tiles[(y * map_w) + (x + 1)];
-    }
-    return 0;
-}
-
-int getSouthTile(int x, int y, int tiles[], int map_w, int map_h) {
-    if (y < map_h - 1) {
-	return tiles[((y + 1) * map_w) + x];
-    }
-    return 0;
-}
-
-int getWestTile(int x, int y, int tiles[], int map_w, int map_h) {
-    if (x > 0) {
-	return tiles[(y * map_w) + (x - 1)];
-    }
-    return 0;
-}
 
 // Program main entry point
 int main(void)
@@ -92,12 +67,11 @@ int main(void)
     int seed = (int) time(NULL);
     SetRandomSeed(seed);
 
-    int tiles[map.w * map.h];
     // Render perlin noise
     for (int y = 0; y < map.h; y++) {
 	for (int x = 0; x < map.w; x++) {
 	    float tile = perlin2d(x, y, 0.0075, 6, seed);
-	    int tile_index = (y * map.w) + x;
+	    int tile_index = getTileIndex(&map, x, y);
 	    int tile_type;
 	    if (tile < 0.55) {
 		tile_type = WATER;
@@ -112,66 +86,70 @@ int main(void)
 		}
 	    } else {
 		int chance = GetRandomValue(0, 100);
-		printf("%d\n", chance);
 		if (chance < 45) {
 		    tile_type = TREE;
 		} else {
 		    tile_type = GRASS;
 		}
 	    }
-	    tiles[tile_index] = tile_type;
+	    map.tiles[tile_index] = tile_type;
 	}
     }
 
     //smooth forests
-    int new_tiles[map.w * map.h];
+    size_t tiles_memory_size = sizeof(int) * (map.w * map.h);
+    int *new_tiles = malloc(tiles_memory_size);
+    //int new_tiles[map.w * map.h];
     int iterations_left = 2;
     while (iterations_left > 0) {
-        memcpy(new_tiles, tiles, sizeof(tiles));
+        memcpy(new_tiles, map.tiles, tiles_memory_size);
         for (int y = 0; y < map.h; y++) {
             for (int x = 0; x < map.w; x++) {
-                int tile_index = (y * map.w) + x;
+                int tile = getTile(&map, x, y);
+                int tile_index = getTileIndex(&map, x, y);
                 bool is_border = (x == 0 || y == 0 ||
                                   x == map.w - 1 || y == map.h - 1);
                 if (!is_border) {
                     int wall_neighbors = 0;
                     for (int dy = y - 1; dy < y + 2; dy++) {
                         for (int dx = x - 1; dx < x + 2; dx++) {
-                            int delta_tile_index = (dy * map.w) + dx;
-                            if (tiles[delta_tile_index] == TREE &&
-                                delta_tile_index != tile_index)
+                            int delta_tile = getTile(&map, dx, dy);
+                            int delta_index = getTileIndex(&map, dx, dy);
+                            if (delta_tile == TREE &&
+                                delta_index != tile_index) {
                                 wall_neighbors++;
+                            }
                         }
                     }
-                    if (tiles[tile_index] == TREE && wall_neighbors < 4) {
+                    //printf("tile: %d, tree neighbors: %d\n", tile, wall_neighbors);
+                    if (tile == TREE && wall_neighbors < 4) {
                         new_tiles[tile_index] = GRASS;
+                        //printf("remove tree\n");
                     }
-                    if (tiles[tile_index] == GRASS && wall_neighbors >= 5) {
+                    if (tile == GRASS && wall_neighbors >= 5) {
                         new_tiles[tile_index] = TREE;
+                        //printf("add tree\n");
                     }
                 }
             }
         }
-        memcpy(tiles, new_tiles, sizeof(tiles));
+        memcpy(map.tiles, new_tiles, tiles_memory_size);
         iterations_left--;
         printf("cool\n");
     }
 
-    // Hide redundant trees
-    memcpy(new_tiles, tiles, sizeof(tiles));
+    
+    /*// Hide redundant trees
+    memcpy(new_tiles, map.tiles, sizeof(map.tiles));
     for (int y = 1; y < map.h - 1; y++) {
 	for (int x = 1; x < map.w - 1; x++) {
-	    int tile_index = (y * map.w) + x;
-            int tile = tiles[tile_index];
+            int tile = getTile(&map, x, y);
+	    int tile_index = getTileIndex(&map, x, y);
 	    if (tile == TREE) {
-                int north_y = y - 1;
-                int east_x = x + 1;
-                int south_y = y + 1;
-                int west_x = x - 1;
-                int north_tile = tiles[(north_y * map.w) + x];
-                int east_tile = tiles[(y * map.w) + east_x];
-                int south_tile = tiles[(south_y * map.w) + x];
-                int west_tile = tiles[(y * map.w) + west_x];
+                int north_tile = getNorthTile(&map, x, y);
+                int east_tile = getEastTile(&map, x, y);
+                int south_tile = getSouthTile(&map, x, y);
+                int west_tile = getWestTile(&map, x, y);;
                 if (north_tile == TREE && east_tile == TREE &&
                     south_tile == TREE && west_tile == TREE) {
                     new_tiles[tile_index] = DEEP_TREE;
@@ -179,53 +157,62 @@ int main(void)
 	    }
 	}
     }
-    memcpy(tiles, new_tiles, sizeof(tiles));
+    memcpy(map.tiles, new_tiles, sizeof(map.tiles));
+    printf("Hell yeah\n");
 
     // Soften corners
-    memcpy(new_tiles, tiles, sizeof(tiles));
+    memcpy(new_tiles, map.tiles, sizeof(map.tiles));
     for (int y = 0; y < map.h; y++) {
 	for (int x = 0; x < map.w; x++) {
-	    int tile_index = (y * map.w) + x;
-	    int tile = tiles[tile_index];
+	    int tile_index = getTileIndex(&map, x, y);
+	    int tile = getTile(&map, x, y);
+            int north_tile = getNorthTile(&map, x, y);
+            int east_tile = getEastTile(&map, x, y);
+            int south_tile = getSouthTile(&map, x, y);
+            int west_tile = getWestTile(&map, x, y);;
 	    if (tile == SAND) {
-		if (getSouthTile(x, y, tiles, map.w, map.h) == WATER) {
-		    if (getEastTile(x, y, tiles, map.w, map.h) == WATER) {
+		if (south_tile == WATER) {
+		    if (east_tile == WATER) {
 			new_tiles[tile_index] = NW_SAND_SE_WATER;
 		    }
-		    if (getWestTile(x, y, tiles, map.w, map.h) == WATER) {
+		    if (west_tile == WATER) {
 			new_tiles[tile_index] = NE_SAND_SW_WATER;
 		    }
 		}
-		if (getNorthTile(x, y, tiles, map.w, map.h) == WATER) {
-		    if (getEastTile(x, y, tiles, map.w, map.h) == WATER) {
+		if (north_tile == WATER) {
+		    if (east_tile == WATER) {
 			new_tiles[tile_index] = SW_SAND_NE_WATER;
 		    }
-		    if (getWestTile(x, y, tiles, map.w, map.h) == WATER) {
+		    if (west_tile == WATER) {
 			new_tiles[tile_index] = SE_SAND_NW_WATER;
 		    }
 		}
 	    }
 	    if (tile == GRASS) {
-		if (getSouthTile(x, y, tiles, map.w, map.h) == SAND) {
-		    if (getEastTile(x, y, tiles, map.w, map.h) == SAND) {
+		if (south_tile == SAND) {
+		    if (east_tile == SAND) {
 			new_tiles[tile_index] = NW_GRASS_SE_SAND;
 		    }
-		    if (getWestTile(x, y, tiles, map.w, map.h) == SAND) {
+		    if (west_tile == SAND) {
 			new_tiles[tile_index] = NE_GRASS_SW_SAND;
 		    }
 		}
-		if (getNorthTile(x, y, tiles, map.w, map.h) == SAND) {
-		    if (getEastTile(x, y, tiles, map.w, map.h) == SAND) {
+		if (north_tile == SAND) {
+		    if (east_tile == SAND) {
 			new_tiles[tile_index] = SW_GRASS_NE_SAND;
 		    }
-		    if (getWestTile(x, y, tiles, map.w, map.h) == SAND) {
+		    if (west_tile == SAND) {
 			new_tiles[tile_index] = SE_GRASS_NW_SAND;
 		    }
 		}
 	    }
 	}
     }
-    memcpy(tiles, new_tiles, sizeof(tiles));
+    memcpy(map.tiles, new_tiles, sizeof(map.tiles));
+    printf("yep\n");
+    //*/
+
+    free(new_tiles);
 
     InitWindow(game.screen_w, game.screen_h, "Mango Mango Monsters");
 
@@ -240,7 +227,8 @@ int main(void)
     while (!player_pos_found) {
 	int x = GetRandomValue(0, map.w - 1);
 	int y = GetRandomValue(0, map.h - 1);
-	if (tiles[(y * map.w) + x] == GRASS) {
+        int tile = getTile(&map, x, y);
+	if (tile == GRASS) {
 	    player.x = x * game.tile_size;
 	    player.y = y * game.tile_size;
 	    player_pos_found = true;
@@ -307,21 +295,62 @@ int main(void)
 	int bottom = bottom_right.y / game.tile_size;
 	int right = bottom_right.x / game.tile_size;
 
+        Vector2 tree_points[1500];
+        int tree_point_count = 0;
+
 	for (int y = top; y <= bottom; y++) {
 	   for (int x = left; x <= right; x++) {
 		Color color;
-		int tile_index = (y * map.w) + x;
-		int tile_type = tiles[tile_index];
-		if (tile_type == WATER) {
+		int tile_index = getTileIndex(&map, x, y);
+		int tile = getTile(&map, x, y);
+		if (tile == WATER) {
 		    color = BLUE;
-		} else if (tile_type == SAND) {
+		} else if (tile == SAND) {
 		    color = WHITE;
-		} else if (tile_type == GRASS) {
+		} else if (tile == GRASS) {
 		    color = GREEN;
 		} else {
 		    color = BLACK;
 		}
-		if (tile_type == TREE) {
+		if (tile == TREE) {
+                    int north_tile = getNorthTile(&map, x, y);
+                    int east_tile = getEastTile(&map, x, y);
+                    int south_tile = getSouthTile(&map, x, y);
+                    int west_tile = getWestTile(&map, x, y);
+                    /*if ((north_tile != TREE &&
+                        north_tile != DEEP_TREE) ||
+                        (west_tile != TREE &&
+                        west_tile != DEEP_TREE)) {
+                        tree_points[tree_point_count] = (Vector2) {
+                            x * game.tile_size,
+                            y * game.tile_size
+                        };
+                        tree_point_count++;
+                    }
+                    if ((north_tile != TREE && north_tile != DEEP_TREE) ||
+                        (east_tile != TREE && east_tile != DEEP_TREE)) {
+                        tree_points[tree_point_count] = (Vector2) {
+                            (x * game.tile_size) + game.tile_size,
+                            y * game.tile_size
+                        };
+                        tree_point_count++;
+                    }
+                    if ((south_tile != TREE && south_tile != DEEP_TREE) ||
+                        (west_tile != TREE && west_tile != DEEP_TREE)) {
+                        tree_points[tree_point_count] = (Vector2) {
+                            x * game.tile_size,
+                            (y * game.tile_size) + game.tile_size
+                        };
+                        tree_point_count++;
+                    }
+                    if ((south_tile != TREE && south_tile != DEEP_TREE) ||
+                        (east_tile != TREE && east_tile != DEEP_TREE)) {
+                        tree_points[tree_point_count] = (Vector2) {
+                            (x * game.tile_size) + game.tile_size,
+                            (y * game.tile_size) + game.tile_size
+                        };
+                        tree_point_count++;
+                    }*/
 		    Vector2 a, b, c;
 		    a = (Vector2){x * game.tile_size,
 			 (y * game.tile_size) + game.tile_size};
@@ -340,28 +369,28 @@ int main(void)
 			          game.tile_size / 2, game.tile_size / 2,
 				  BROWN);
 		    //DrawTriangle(a, b, c, DARKGREEN);
-		} else if (tile_type == NW_SAND_SE_WATER) {
+		} else if (tile == NW_SAND_SE_WATER) {
 		    drawSlantTileNW(x, y, game.tile_size, WHITE);
 		    drawSlantTileSE(x, y, game.tile_size, BLUE);
-		} else if (tile_type == NE_SAND_SW_WATER) {
+		} else if (tile == NE_SAND_SW_WATER) {
 		    drawSlantTileNE(x, y, game.tile_size, WHITE);
 		    drawSlantTileSW(x, y, game.tile_size, BLUE);
-		} else if (tile_type == SW_SAND_NE_WATER) {
+		} else if (tile == SW_SAND_NE_WATER) {
 		    drawSlantTileSW(x, y, game.tile_size, WHITE);
 		    drawSlantTileNE(x, y, game.tile_size, BLUE);
-		} else if (tile_type == SE_SAND_NW_WATER) {
+		} else if (tile == SE_SAND_NW_WATER) {
 		    drawSlantTileSE(x, y, game.tile_size, WHITE);
 		    drawSlantTileNW(x, y, game.tile_size, BLUE);
-		} else if (tile_type == NW_GRASS_SE_SAND) {
+		} else if (tile == NW_GRASS_SE_SAND) {
 		    drawSlantTileNW(x, y, game.tile_size, GREEN);
 		    drawSlantTileSE(x, y, game.tile_size, WHITE);
-		} else if (tile_type == NE_GRASS_SW_SAND) {
+		} else if (tile == NE_GRASS_SW_SAND) {
 		    drawSlantTileNE(x, y, game.tile_size, GREEN);
 		    drawSlantTileSW(x, y, game.tile_size, WHITE);
-		} else if (tile_type == SW_GRASS_NE_SAND) {
+		} else if (tile == SW_GRASS_NE_SAND) {
 		    drawSlantTileSW(x, y, game.tile_size, GREEN);
 		    drawSlantTileNE(x, y, game.tile_size, WHITE);
-		} else if (tile_type == SE_GRASS_NW_SAND) {
+		} else if (tile == SE_GRASS_NW_SAND) {
 		    drawSlantTileSE(x, y, game.tile_size, GREEN);
 		    drawSlantTileNW(x, y, game.tile_size, WHITE);
 		} else {
@@ -372,6 +401,36 @@ int main(void)
 	}
 
 	DrawCircle(player.x, player.y, player.radius, player.color);
+        /*Vector2 mouse = GetScreenToWorld2D(GetMousePosition(), camera);
+        DrawCircle(mouse.x, mouse.y, player.radius, player.color);
+        float angle = Vector2LineAngle((Vector2) {player.x, player.y}, mouse);
+        float anglecos = cos(angle);
+        float anglesin = 0 - sin(angle);
+        int circle_x = player.x + (20 * anglecos);
+        int circle_y = player.y + (20 * anglesin);
+        for (int i = 0; i < 5; i++) {
+            int circle_x = player.x + ((i * 10) * anglecos);
+            int circle_y = player.y + ((i * 10) * anglesin);
+            DrawCircle(circle_x, circle_y, player.radius / 2, player.color);
+        }*/
+
+        /*for (int i = 0; i < tree_point_count; i++) {
+            Vector2 point = tree_points[i];
+            Vector2 line = {player.x, player.y};
+            float angle = Vector2LineAngle((Vector2) {
+                player.x, 
+                player.y}, point);
+            float anglecos = cos(angle);
+            float anglesin = 0 - sin(angle);
+            int count = 0;
+            while (abs(line.x - point.x) > 5 || abs(line.y - point.y) > 5) {
+                line.x = (int) (player.x + (count * anglecos));
+                line.y = (int) (player.y + (count * anglesin));
+                //printf("%d, %d\n");
+                DrawLine(player.x, player.y, line.x, line.y, RED);
+                count++;
+            }
+        }*/
 
 	EndMode2D();
 
@@ -379,6 +438,7 @@ int main(void)
     }
 
     // De-Initialization
+    Map_free(&map);
     CloseWindow();        // Close window and OpenGL context
 
     return 0;

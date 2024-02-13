@@ -6,6 +6,7 @@
 #define MAX_BEINGS 50
 
 enum Tile {
+    NO_TILE,
     WATER,
     SAND,
     GRASS,
@@ -46,13 +47,18 @@ typedef struct MapStruct Map;
 struct MapStruct {
     int w;
     int h;
-    Entity *tiles;
+    int *tiles;
     int being_count;
     Entity beings[MAX_BEINGS];
 };
 
 Map Map_create(int w, int h);
-void Map_setTile(Map *map, int x, int y, int type, Game *Game);
-Entity *Map_addBeing(Map *map);
+void Map_free(Map *map);
+int getTile(Map *map, int x, int y);
+int getTileIndex(Map *map, int x, int y);
+int getNorthTile(Map *map, int x, int y);
+int getEastTile(Map *map, int x, int y);
+int getSouthTile(Map *map, int x, int y);
+int getWestTile(Map *map, int x, int y);
 
 #endif
