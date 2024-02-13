@@ -86,10 +86,10 @@ int main(void)
 		}
 	    } else {
 		int chance = GetRandomValue(0, 100);
-		if (chance < 45) {
-		    tile_type = TREE;
+		if (chance < 70) {
+		    tile_type = FOREST_TREE;
 		} else {
-		    tile_type = GRASS;
+		    tile_type = FOREST_FLOOR;
 		}
 	    }
 	    map.tiles[tile_index] = tile_type;
@@ -115,19 +115,19 @@ int main(void)
                         for (int dx = x - 1; dx < x + 2; dx++) {
                             int delta_tile = getTile(&map, dx, dy);
                             int delta_index = getTileIndex(&map, dx, dy);
-                            if (delta_tile == TREE &&
+                            if (delta_tile == FOREST_TREE &&
                                 delta_index != tile_index) {
                                 wall_neighbors++;
                             }
                         }
                     }
                     //printf("tile: %d, tree neighbors: %d\n", tile, wall_neighbors);
-                    if (tile == TREE && wall_neighbors < 4) {
-                        new_tiles[tile_index] = GRASS;
+                    if (tile == FOREST_TREE && wall_neighbors < 4) {
+                        new_tiles[tile_index] = FOREST_FLOOR;
                         //printf("remove tree\n");
                     }
                     if (tile == GRASS && wall_neighbors >= 5) {
-                        new_tiles[tile_index] = TREE;
+                        new_tiles[tile_index] = FOREST_TREE;
                         //printf("add tree\n");
                     }
                 }
@@ -145,13 +145,9 @@ int main(void)
 	for (int x = 1; x < map.w - 1; x++) {
             int tile = getTile(&map, x, y);
 	    int tile_index = getTileIndex(&map, x, y);
-	    if (tile == TREE) {
-                int north_tile = getNorthTile(&map, x, y);
-                int east_tile = getEastTile(&map, x, y);
+	    if (tile == FOREST_TREE) {
                 int south_tile = getSouthTile(&map, x, y);
-                int west_tile = getWestTile(&map, x, y);;
-                if (north_tile == TREE && east_tile == TREE &&
-                    south_tile == TREE && west_tile == TREE) {
+                if (south_tile == FOREST_TREE) {
                     new_tiles[tile_index] = DEEP_TREE;
                 }
 	    }
@@ -240,17 +236,17 @@ int main(void)
     camera.offset = (Vector2){game.screen_w / 2, game.screen_h / 2};
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
-    int speed = 2;
+    int speed = game.tile_size;
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         // TODO: Update your variables here
-	if (IsKeyDown(KEY_LEFT)) player.x -= speed;
-	if (IsKeyDown(KEY_RIGHT)) player.x += speed;
-	if (IsKeyDown(KEY_UP)) player.y -= speed;
-	if (IsKeyDown(KEY_DOWN)) player.y += speed;
+	if (IsKeyPressed(KEY_LEFT)) player.x -= speed;
+	if (IsKeyPressed(KEY_RIGHT)) player.x += speed;
+	if (IsKeyPressed(KEY_UP)) player.y -= speed;
+	if (IsKeyPressed(KEY_DOWN)) player.y += speed;
 	if (IsKeyPressed(KEY_W)) camera.zoom += 0.0625;
 	if (IsKeyPressed(KEY_S)) camera.zoom -= 0.0625;
 	if (IsKeyPressed(KEY_A)) speed -= 2;
@@ -297,6 +293,8 @@ int main(void)
 
         Vector2 tree_points[1500];
         int tree_point_count = 0;
+        Vector2 post_renders[200];
+        int post_render_count = 0;
 
 	for (int y = top; y <= bottom; y++) {
 	   for (int x = left; x <= right; x++) {
@@ -313,44 +311,6 @@ int main(void)
 		    color = BLACK;
 		}
 		if (tile == TREE) {
-                    int north_tile = getNorthTile(&map, x, y);
-                    int east_tile = getEastTile(&map, x, y);
-                    int south_tile = getSouthTile(&map, x, y);
-                    int west_tile = getWestTile(&map, x, y);
-                    /*if ((north_tile != TREE &&
-                        north_tile != DEEP_TREE) ||
-                        (west_tile != TREE &&
-                        west_tile != DEEP_TREE)) {
-                        tree_points[tree_point_count] = (Vector2) {
-                            x * game.tile_size,
-                            y * game.tile_size
-                        };
-                        tree_point_count++;
-                    }
-                    if ((north_tile != TREE && north_tile != DEEP_TREE) ||
-                        (east_tile != TREE && east_tile != DEEP_TREE)) {
-                        tree_points[tree_point_count] = (Vector2) {
-                            (x * game.tile_size) + game.tile_size,
-                            y * game.tile_size
-                        };
-                        tree_point_count++;
-                    }
-                    if ((south_tile != TREE && south_tile != DEEP_TREE) ||
-                        (west_tile != TREE && west_tile != DEEP_TREE)) {
-                        tree_points[tree_point_count] = (Vector2) {
-                            x * game.tile_size,
-                            (y * game.tile_size) + game.tile_size
-                        };
-                        tree_point_count++;
-                    }
-                    if ((south_tile != TREE && south_tile != DEEP_TREE) ||
-                        (east_tile != TREE && east_tile != DEEP_TREE)) {
-                        tree_points[tree_point_count] = (Vector2) {
-                            (x * game.tile_size) + game.tile_size,
-                            (y * game.tile_size) + game.tile_size
-                        };
-                        tree_point_count++;
-                    }*/
 		    Vector2 a, b, c;
 		    a = (Vector2){x * game.tile_size,
 			 (y * game.tile_size) + game.tile_size};
@@ -360,16 +320,79 @@ int main(void)
 			 y * game.tile_size};
 		    DrawRectangle(x * game.tile_size, y * game.tile_size,
 			          game.tile_size, game.tile_size, GREEN);
-		    DrawRectangle((x * game.tile_size) + 2, 
-                                  (y * game.tile_size) + 2,
-			          game.tile_size - 4, game.tile_size / 2,
+		    DrawRectangle((x * game.tile_size), 
+                                  (y * game.tile_size),
+			          game.tile_size, game.tile_size / 2,
 				  DARKGREEN);
 		    DrawRectangle((x * game.tile_size) + game.tile_size / 4,
 				  (y * game.tile_size) + game.tile_size / 2,
 			          game.tile_size / 2, game.tile_size / 2,
 				  BROWN);
 		    //DrawTriangle(a, b, c, DARKGREEN);
-		} else if (tile == NW_SAND_SE_WATER) {
+		} else if (tile == FOREST_TREE) {
+                    int player_tile_x = (int) player.x / game.tile_size;
+                    int player_tile_y = (int) player.y / game.tile_size;
+                    int player_tile = getTile(&map, player_tile_x,
+                        player_tile_y);
+                    int distance = sqrt(
+                        ((player_tile_x - x) * (player_tile_x - x)) +
+                        ((player_tile_y - y) * (player_tile_y - y)));
+                    if (distance < 5) {
+                        post_renders[post_render_count] = (Vector2) {x, y};
+                        post_render_count++;
+                        DrawRectangle(x * game.tile_size, y * game.tile_size,
+                                      game.tile_size, game.tile_size, GREEN);
+                        /*DrawRectangle((x * game.tile_size), 
+                                      (y * game.tile_size),
+                                      game.tile_size, game.tile_size / 2,
+                                      DARKGREEN);*/
+                        /*DrawRectangle((x * game.tile_size) + game.tile_size / 4,
+                                      (y * game.tile_size) + game.tile_size / 2,
+                                      game.tile_size / 2, game.tile_size / 2,
+                                      BROWN);*/
+                        //DrawTriangle(a, b, c, DARKGREEN);
+                    } else {
+                        DrawRectangle((x * game.tile_size), 
+                                      (y * game.tile_size),
+                                      game.tile_size, game.tile_size,
+                                      DARKGREEN);
+                    }
+                } else if (tile == FOREST_FLOOR) {
+                    int player_tile_x = (int) player.x / game.tile_size;
+                    int player_tile_y = (int) player.y / game.tile_size;
+                    int player_tile = getTile(&map, player_tile_x,
+                        player_tile_y);
+                    int distance = sqrt(
+                        ((player_tile_x - x) * (player_tile_x - x)) +
+                        ((player_tile_y - y) * (player_tile_y - y)));
+                    if (distance < 5) {
+                        post_renders[post_render_count] = (Vector2) {x, y};
+                        post_render_count++;
+                        color = GREEN;
+                    } else {
+                        color = DARKGREEN;
+                    }
+		    DrawRectangle((x * game.tile_size), 
+                                  (y * game.tile_size),
+			          game.tile_size, game.tile_size,
+				  color);
+                } else if (tile == DEEP_TREE) {
+                    int player_tile_x = (int) player.x / game.tile_size;
+                    int player_tile_y = (int) player.y / game.tile_size;
+                    int player_tile = getTile(&map, player_tile_x,
+                        player_tile_y);
+                    int distance = sqrt(
+                        ((player_tile_x - x) * (player_tile_x - x)) +
+                        ((player_tile_y - y) * (player_tile_y - y)));
+                    if (distance < 5) {
+                        post_renders[post_render_count] = (Vector2) {x, y};
+                        post_render_count++;
+                    } else {
+                        DrawRectangle(x * game.tile_size, y * game.tile_size,
+                                      game.tile_size, game.tile_size,
+                                      DARKGREEN);
+                    }
+                } else if (tile == NW_SAND_SE_WATER) {
 		    drawSlantTileNW(x, y, game.tile_size, WHITE);
 		    drawSlantTileSE(x, y, game.tile_size, BLUE);
 		} else if (tile == NE_SAND_SW_WATER) {
@@ -400,7 +423,28 @@ int main(void)
 	    }
 	}
 
-	DrawCircle(player.x, player.y, player.radius, player.color);
+	DrawCircle(player.x + (game.tile_size / 2),
+                   player.y + (game.tile_size / 2), player.radius,
+                   player.color);
+        for (int i = 0; i < post_render_count; i++) {
+            int x = post_renders[i].x;
+            int y = post_renders[i].y;
+            int tile = getTile(&map, x, y);
+            if (tile == FOREST_TREE) {
+                DrawRectangle(x * game.tile_size, y * game.tile_size,
+                              game.tile_size, game.tile_size / 2, DARKGREEN);
+                DrawRectangle((x * game.tile_size) + game.tile_size / 4,
+                              (y * game.tile_size) + game.tile_size / 2,
+                              game.tile_size / 2, game.tile_size / 2,
+                              BROWN);
+            }
+            if (tile == DEEP_TREE) {
+                DrawRectangle(x * game.tile_size, y * game.tile_size,
+                              game.tile_size, game.tile_size,
+                              DARKGREEN);
+            }
+        }
+                
         /*Vector2 mouse = GetScreenToWorld2D(GetMousePosition(), camera);
         DrawCircle(mouse.x, mouse.y, player.radius, player.color);
         float angle = Vector2LineAngle((Vector2) {player.x, player.y}, mouse);

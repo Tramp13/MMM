@@ -60,3 +60,31 @@ int getWestTile(Map *map, int x, int y) {
     }
     return NO_TILE;
 }
+
+int getNorthEastTile(Map *map, int x, int y) {
+    if (y > 0) {
+	return map->tiles[((y - 1) * map->w) + (x + 1)];
+    }
+    return NO_TILE;
+}
+
+int getSouthEastTile(Map *map, int x, int y) {
+    if (x < map->w - 1) {
+	return map->tiles[((y + 1) * map->w) + (x + 1)];
+    }
+    return NO_TILE;
+}
+
+int getSouthWestTile(Map *map, int x, int y) {
+    if (y < map->h - 1) {
+	return map->tiles[((y + 1) * map->w) + (x - 1)];
+    }
+    return NO_TILE;
+}
+
+int getNorthWestTile(Map *map, int x, int y) {
+    if (x > 0) {
+	return map->tiles[((y - 1) * map->w) + (x - 1)];
+    }
+    return NO_TILE;
+}

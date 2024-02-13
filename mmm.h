@@ -10,7 +10,9 @@ enum Tile {
     WATER,
     SAND,
     GRASS,
+    FOREST_FLOOR,
     TREE,
+    FOREST_TREE,
     DEEP_TREE,
     NW_SAND_SE_WATER,
     NE_SAND_SW_WATER,
@@ -60,5 +62,9 @@ int getNorthTile(Map *map, int x, int y);
 int getEastTile(Map *map, int x, int y);
 int getSouthTile(Map *map, int x, int y);
 int getWestTile(Map *map, int x, int y);
+int getNorthEastTile(Map *map, int x, int y);
+int getSouthEastTile(Map *map, int x, int y);
+int getSouthWestTile(Map *map, int x, int y);
+int getNorthWestTile(Map *map, int x, int y);
 
 #endif
