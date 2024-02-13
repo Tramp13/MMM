@@ -139,8 +139,8 @@ int main(void)
     }
 
     
-    /*// Hide redundant trees
-    memcpy(new_tiles, map.tiles, sizeof(map.tiles));
+    // Hide redundant trees
+    memcpy(new_tiles, map.tiles, tiles_memory_size);
     for (int y = 1; y < map.h - 1; y++) {
 	for (int x = 1; x < map.w - 1; x++) {
             int tile = getTile(&map, x, y);
@@ -157,11 +157,11 @@ int main(void)
 	    }
 	}
     }
-    memcpy(map.tiles, new_tiles, sizeof(map.tiles));
+    memcpy(map.tiles, new_tiles, tiles_memory_size);
     printf("Hell yeah\n");
 
     // Soften corners
-    memcpy(new_tiles, map.tiles, sizeof(map.tiles));
+    memcpy(new_tiles, map.tiles, tiles_memory_size);
     for (int y = 0; y < map.h; y++) {
 	for (int x = 0; x < map.w; x++) {
 	    int tile_index = getTileIndex(&map, x, y);
@@ -208,7 +208,7 @@ int main(void)
 	    }
 	}
     }
-    memcpy(map.tiles, new_tiles, sizeof(map.tiles));
+    memcpy(map.tiles, new_tiles, tiles_memory_size);
     printf("yep\n");
     //*/
 
