@@ -51,6 +51,31 @@ void drawSlantTileSE(int tile_x, int tile_y, int tile_size, Color color) {
 	DrawTriangle(a, b, c, color);
 }
 
+int distance(int ax, int ay, int bx, int by) {
+    return sqrt(((ax - bx) * (ax - bx)) + ((ay - by) * (ay - by)));
+}
+
+bool isVisible(Map *map, int ax, int ay, int bx, int by) {
+    Vector2 walk_point = {ax, ay};
+    float angle = Vector2LineAngle((Vector2) {ax, ay},
+                                   (Vector2) {bx, by});
+    float anglecos = cos(angle);
+    float anglesin = 0 - sin(angle);
+    int max_distance = distance(ax, ay, bx, by);
+    int count = 0;
+    int walk_distance = 0;
+    while (walk_distance < max_distance) {
+        walk_point.x = (int) (ax + (count * anglecos));
+        walk_point.y = (int) (ay + (count * anglesin));
+        walk_distance = distance(ax, ay, walk_point.x, walk_point.y);
+        int walk_tile = getTile(map, walk_point.x, walk_point.y);
+        if (walk_tile == FOREST_TREE) return false;
+        count++;
+    }
+    return true;
+}
+
+
 
 // Program main entry point
 int main(void)
@@ -332,7 +357,9 @@ int main(void)
                     int distance = sqrt(
                         ((player_tile_x - x) * (player_tile_x - x)) +
                         ((player_tile_y - y) * (player_tile_y - y)));
-                    if (distance < 5 && player_tile == FOREST_FLOOR) {
+                    if (distance < 5 && player_tile == FOREST_FLOOR &&
+                        isVisible(&map, player_tile_x, player_tile_y,
+                                  x, y)) {
                         DrawRectangle(x * game.tile_size, y * game.tile_size,
                                       game.tile_size, game.tile_size, GREEN);
                         DrawRectangle((x * game.tile_size), 
@@ -358,7 +385,8 @@ int main(void)
                     int distance = sqrt(
                         ((player_tile_x - x) * (player_tile_x - x)) +
                         ((player_tile_y - y) * (player_tile_y - y)));
-                    if (distance < 5 && player_tile == FOREST_FLOOR) {
+                    if (distance < 5 && player_tile == FOREST_FLOOR &&
+                        isVisible(&map, player_tile_x, player_tile_y, x, y)) {
                         color = GREEN;
                     } else {
                         color = DARKGREEN;
