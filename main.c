@@ -7,6 +7,12 @@
 #include <time.h>
 #include <string.h>
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION 330
+#else
+    #define GLSL_VERSION 100
+#endif
+
 void drawSlantTileNW(int tile_x, int tile_y, int tile_size, Color color) {
     Vector2 a, b, c;
     a = (Vector2){tile_x * tile_size,
@@ -75,7 +81,13 @@ bool isVisible(Map *map, int ax, int ay, int bx, int by) {
     return true;
 }
 
+typedef struct FOV {
+    Vector2 position;
+    float radius;
 
+    unsigned int position_loc;
+    unsigned int radius_loc;
+} FOV;
 
 // Program main entry point
 int main(void)
@@ -111,7 +123,7 @@ int main(void)
 		}
 	    } else {
 		int chance = GetRandomValue(0, 100);
-		if (chance < 70) {
+		if (chance < 45) {
 		    tile_type = FOREST_TREE;
 		} else {
 		    tile_type = FOREST_FLOOR;
@@ -243,7 +255,7 @@ int main(void)
     player.x = 0;
     player.y = 0;
 
-    //find free space for player
+    /*//find free space for player
     bool player_pos_found = false;
     while (!player_pos_found) {
 	int x = GetRandomValue(0, map.w - 1);
@@ -254,7 +266,7 @@ int main(void)
 	    player.y = y * game.tile_size;
 	    player_pos_found = true;
 	}
-    }
+    }*/
 
     Camera2D camera = { 0 };
     camera.target = (Vector2){player.x, player.y};
@@ -262,6 +274,22 @@ int main(void)
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
     int speed = game.tile_size;
+
+    Shader shdr_fov = LoadShader(0, "fov.fs");
+
+    FOV fov;
+    fov.position = GetWorldToScreen2D((Vector2)
+        {player.x, (game.screen_h - player.y)}, camera);
+    fov.position.y = game.screen_h - fov.position.y;
+    fov.radius = 350.0f;
+
+    fov.position_loc = GetShaderLocation(shdr_fov, "fov.pos\0");
+    fov.radius_loc = GetShaderLocation(shdr_fov, "fov.radius\0");
+
+    SetShaderValue(shdr_fov, fov.position_loc, &fov.position.x,
+                   SHADER_UNIFORM_VEC2);
+    SetShaderValue(shdr_fov, fov.radius_loc, &fov.radius,
+                   SHADER_UNIFORM_FLOAT);
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -297,6 +325,12 @@ int main(void)
 	if (player_distance_from_bottom < (game.screen_h / 2)) {
 	    camera.offset.y = game.screen_h - player_distance_from_bottom;
 	}
+
+        fov.position = GetWorldToScreen2D((Vector2)
+            {player.x, player.y}, camera);
+        fov.position.y = game.screen_h - fov.position.y;
+        SetShaderValue(shdr_fov, fov.position_loc, &fov.position.x,
+                       SHADER_UNIFORM_VEC2);
 
         // Draw
         BeginDrawing();
@@ -357,7 +391,7 @@ int main(void)
                     int distance = sqrt(
                         ((player_tile_x - x) * (player_tile_x - x)) +
                         ((player_tile_y - y) * (player_tile_y - y)));
-                    if (distance < 5 && player_tile == FOREST_FLOOR &&
+                    if (distance < 8 && player_tile == FOREST_FLOOR &&
                         isVisible(&map, player_tile_x, player_tile_y,
                                   x, y)) {
                         DrawRectangle(x * game.tile_size, y * game.tile_size,
@@ -385,7 +419,7 @@ int main(void)
                     int distance = sqrt(
                         ((player_tile_x - x) * (player_tile_x - x)) +
                         ((player_tile_y - y) * (player_tile_y - y)));
-                    if (distance < 5 && player_tile == FOREST_FLOOR &&
+                    if (distance < 8 && player_tile == FOREST_FLOOR &&
                         isVisible(&map, player_tile_x, player_tile_y, x, y)) {
                         color = GREEN;
                     } else {
@@ -430,8 +464,8 @@ int main(void)
 	    }
 	}
 
-	DrawCircle(player.x + (game.tile_size / 2),
-                   player.y + (game.tile_size / 2), player.radius,
+	DrawCircle(player.x,
+                   player.y, player.radius,
                    player.color);
                 
         /*Vector2 mouse = GetScreenToWorld2D(GetMousePosition(), camera);
@@ -467,10 +501,15 @@ int main(void)
 
 	EndMode2D();
 
+        BeginShaderMode(shdr_fov);
+            DrawRectangle(0, 0, game.screen_w, game.screen_h, WHITE);
+        EndShaderMode();
+
         EndDrawing();
     }
 
     // De-Initialization
+    UnloadShader(shdr_fov);
     Map_free(&map);
     CloseWindow();        // Close window and OpenGL context
 
