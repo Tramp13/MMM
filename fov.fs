@@ -21,8 +21,8 @@ void main() {
     if (d > fov.radius) {
         alpha = 1.0;
     } else {
-        alpha = 0.0;
+        alpha = d / fov.radius;
     }
 
-    finalColor = vec4(0, 0, 0, alpha);
+    finalColor = vec4(0, 0.46, 0.17, alpha);
 }

@@ -88,3 +88,13 @@ int getNorthWestTile(Map *map, int x, int y) {
     }
     return NO_TILE;
 }
+
+bool isSolid(Map *map, int x, int y) {
+    int tile = getTile(map, x, y);
+    if (tile == TREE || tile == FOREST_TREE || tile == WATER ||
+        tile == DEEP_TREE) {
+        return true;
+    } else {
+        return false;
+    }
+}

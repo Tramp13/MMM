@@ -66,5 +66,6 @@ int getNorthEastTile(Map *map, int x, int y);
 int getSouthEastTile(Map *map, int x, int y);
 int getSouthWestTile(Map *map, int x, int y);
 int getNorthWestTile(Map *map, int x, int y);
+bool isSolid(Map *map, int x, int y);
 
 #endif

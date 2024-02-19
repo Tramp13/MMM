@@ -193,7 +193,7 @@ int main(void)
     memcpy(map.tiles, new_tiles, tiles_memory_size);
     printf("Hell yeah\n");
 
-    // Soften corners
+    /*// Soften corners
     memcpy(new_tiles, map.tiles, tiles_memory_size);
     for (int y = 0; y < map.h; y++) {
 	for (int x = 0; x < map.w; x++) {
@@ -252,10 +252,10 @@ int main(void)
     SetTargetFPS(60);            // Set our game to run at 60 frames-per-second
     
     Entity player = Player_create(&game);
-    player.x = 0;
-    player.y = 0;
+    /*player.x = game.tile_size / 2;
+    player.y = game.tile_size / 2;*/
 
-    /*//find free space for player
+    //find free space for player
     bool player_pos_found = false;
     while (!player_pos_found) {
 	int x = GetRandomValue(0, map.w - 1);
@@ -266,14 +266,16 @@ int main(void)
 	    player.y = y * game.tile_size;
 	    player_pos_found = true;
 	}
-    }*/
+    }
 
     Camera2D camera = { 0 };
     camera.target = (Vector2){player.x, player.y};
     camera.offset = (Vector2){game.screen_w / 2, game.screen_h / 2};
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
-    int speed = game.tile_size;
+    int x_speed = 0;
+    int y_speed = 0;
+    int reg_speed = game.tile_size / 8;
 
     Shader shdr_fov = LoadShader(0, "fov.fs");
 
@@ -281,7 +283,7 @@ int main(void)
     fov.position = GetWorldToScreen2D((Vector2)
         {player.x, (game.screen_h - player.y)}, camera);
     fov.position.y = game.screen_h - fov.position.y;
-    fov.radius = 350.0f;
+    fov.radius = 64.0f;
 
     fov.position_loc = GetShaderLocation(shdr_fov, "fov.pos\0");
     fov.radius_loc = GetShaderLocation(shdr_fov, "fov.radius\0");
@@ -294,16 +296,27 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-        // Update
-        // TODO: Update your variables here
-	if (IsKeyPressed(KEY_LEFT)) player.x -= speed;
-	if (IsKeyPressed(KEY_RIGHT)) player.x += speed;
-	if (IsKeyPressed(KEY_UP)) player.y -= speed;
-	if (IsKeyPressed(KEY_DOWN)) player.y += speed;
-	if (IsKeyPressed(KEY_W)) camera.zoom += 0.0625;
-	if (IsKeyPressed(KEY_S)) camera.zoom -= 0.0625;
-	if (IsKeyPressed(KEY_A)) speed -= 2;
-	if (IsKeyPressed(KEY_D)) speed += 2;
+        x_speed = 0;
+        y_speed = 0;
+
+	if (IsKeyDown(KEY_LEFT)) x_speed = -reg_speed;
+	if (IsKeyDown(KEY_RIGHT)) x_speed = reg_speed;
+	if (IsKeyDown(KEY_UP)) y_speed = -reg_speed;
+	if (IsKeyDown(KEY_DOWN)) y_speed = reg_speed;
+	if (IsKeyPressed(KEY_W)) {
+            camera.zoom += 0.0625;
+            fov.radius = 64 * camera.zoom;
+            SetShaderValue(shdr_fov, fov.radius_loc, &fov.radius,
+                   SHADER_UNIFORM_FLOAT);
+        }
+	if (IsKeyPressed(KEY_S)) {
+            camera.zoom -= 0.0625;
+            fov.radius = 64 * camera.zoom;
+            SetShaderValue(shdr_fov, fov.radius_loc, &fov.radius,
+                   SHADER_UNIFORM_FLOAT);
+        }
+	if (IsKeyPressed(KEY_A)) reg_speed -= 2;
+	if (IsKeyPressed(KEY_D)) reg_speed += 2;
 
 	camera.target = (Vector2){player.x, player.y};
         camera.offset = (Vector2){game.screen_w / 2, game.screen_h / 2};
@@ -331,6 +344,76 @@ int main(void)
         fov.position.y = game.screen_h - fov.position.y;
         SetShaderValue(shdr_fov, fov.position_loc, &fov.position.x,
                        SHADER_UNIFORM_VEC2);
+
+        player.x += x_speed;
+        player.y += y_speed;
+        
+        int player_tx = (int) player.x / game.tile_size;
+        int player_ty = (int) player.y / game.tile_size;
+        int player_tile = getTile(&map, player_tx, player_ty);
+
+        for (int dy = player_ty - 1; dy < player_ty + 2; dy++) {
+            for (int dx = player_tx - 1; dx < player_tx + 2; dx++) {
+                bool is_solid = isSolid(&map, dx, dy);
+                if (is_solid) {
+                    Rectangle tile_rect;
+                    tile_rect.x = dx * game.tile_size;
+                    tile_rect.y = dy * game.tile_size;
+                    tile_rect.width = game.tile_size;
+                    tile_rect.height = game.tile_size;
+                    Vector2 player_center = (Vector2) {player.x, player.y};
+                    bool collides = CheckCollisionCircleRec(player_center,
+                                        player.radius, tile_rect);
+                    while (collides) {
+                        int tile_center_x =
+                            (int) tile_rect.x + (tile_rect.width / 2);
+                        int tile_center_y =
+                            (int) tile_rect.y + (tile_rect.height / 2);
+                        int x_distance = abs(player.x - tile_center_x);
+                        int y_distance = abs(player.y - tile_center_y);
+                        if (y_distance > x_distance ||
+                            y_distance == x_distance) {
+                            if (y_speed < 0) {
+                                player.y += 1;
+                            }
+                            if (y_speed > 0) {
+                                player.y -= 1;
+                            }
+                            if (y_speed == 0) {
+                                if (player.y < tile_center_y) {
+                                    player.y -= 1;
+                                }
+                                if (player.y > tile_center_y) {
+                                    player.y += 1;
+                                }
+                            }
+                        }
+                        if (x_distance > y_distance ||
+                            x_distance == y_distance) {
+                            if (x_speed < 0) {
+                                player.x += 1;
+                            }
+                            if (x_speed > 0) {
+                                player.x -= 1;
+                            }
+                            if (x_speed == 0) {
+                                if (player.x < tile_center_x) {
+                                    player.x -= 1;
+                                }
+                                if (player.x > tile_center_x) {
+                                    player.x += 1;
+                                }
+                            }
+                        }
+                        printf("%d, %d\n", player.x, player.y);
+                        player_center = (Vector2) {player.x, player.y};
+                        collides = CheckCollisionCircleRec(player_center,
+                                        player.radius, tile_rect);
+                    }
+                }
+            }
+        }
+                    
 
         // Draw
         BeginDrawing();
@@ -384,16 +467,10 @@ int main(void)
 				  BROWN);
 		    //DrawTriangle(a, b, c, DARKGREEN);
 		} else if (tile == FOREST_TREE) {
-                    int player_tile_x = (int) player.x / game.tile_size;
-                    int player_tile_y = (int) player.y / game.tile_size;
-                    int player_tile = getTile(&map, player_tile_x,
-                        player_tile_y);
                     int distance = sqrt(
-                        ((player_tile_x - x) * (player_tile_x - x)) +
-                        ((player_tile_y - y) * (player_tile_y - y)));
-                    if (distance < 8 && player_tile == FOREST_FLOOR &&
-                        isVisible(&map, player_tile_x, player_tile_y,
-                                  x, y)) {
+                        ((player_tx - x) * (player_tx - x)) +
+                        ((player_ty - y) * (player_ty - y)));
+                    if (distance < 8 && player_tile == FOREST_FLOOR) {
                         DrawRectangle(x * game.tile_size, y * game.tile_size,
                                       game.tile_size, game.tile_size, GREEN);
                         DrawRectangle((x * game.tile_size), 
@@ -412,15 +489,10 @@ int main(void)
                     }
                         
                 } else if (tile == FOREST_FLOOR) {
-                    int player_tile_x = (int) player.x / game.tile_size;
-                    int player_tile_y = (int) player.y / game.tile_size;
-                    int player_tile = getTile(&map, player_tile_x,
-                        player_tile_y);
                     int distance = sqrt(
-                        ((player_tile_x - x) * (player_tile_x - x)) +
-                        ((player_tile_y - y) * (player_tile_y - y)));
-                    if (distance < 8 && player_tile == FOREST_FLOOR &&
-                        isVisible(&map, player_tile_x, player_tile_y, x, y)) {
+                        ((player_tx - x) * (player_tx - x)) +
+                        ((player_ty - y) * (player_ty - y)));
+                    if (distance < 8 && player_tile == FOREST_FLOOR) {
                         color = GREEN;
                     } else {
                         color = DARKGREEN;
@@ -501,9 +573,11 @@ int main(void)
 
 	EndMode2D();
 
-        BeginShaderMode(shdr_fov);
-            DrawRectangle(0, 0, game.screen_w, game.screen_h, WHITE);
-        EndShaderMode();
+        if (player_tile == FOREST_FLOOR) {
+            BeginShaderMode(shdr_fov);
+                DrawRectangle(0, 0, game.screen_w, game.screen_h, BROWN);
+            EndShaderMode();
+        }
 
         EndDrawing();
     }
