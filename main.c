@@ -405,7 +405,6 @@ int main(void)
                                 }
                             }
                         }
-                        printf("%d, %d\n", player.x, player.y);
                         player_center = (Vector2) {player.x, player.y};
                         collides = CheckCollisionCircleRec(player_center,
                                         player.radius, tile_rect);
@@ -432,6 +431,8 @@ int main(void)
 	    camera);
 	int bottom = bottom_right.y / game.tile_size;
 	int right = bottom_right.x / game.tile_size;
+        int post_renders[2000];
+        int post_render_count = 0;
 
 	for (int y = top; y <= bottom; y++) {
 	   for (int x = left; x <= right; x++) {
@@ -467,40 +468,27 @@ int main(void)
 				  BROWN);
 		    //DrawTriangle(a, b, c, DARKGREEN);
 		} else if (tile == FOREST_TREE) {
-                    int distance = sqrt(
-                        ((player_tx - x) * (player_tx - x)) +
-                        ((player_ty - y) * (player_ty - y)));
-                    if (distance < 8 && player_tile == FOREST_FLOOR) {
-                        DrawRectangle(x * game.tile_size, y * game.tile_size,
-                                      game.tile_size, game.tile_size, GREEN);
-                        DrawRectangle((x * game.tile_size), 
-                                      (y * game.tile_size),
-                                      game.tile_size, game.tile_size / 2,
-                                      DARKGREEN);
-                        DrawRectangle((x * game.tile_size) + game.tile_size / 4,
-                                      (y * game.tile_size) + game.tile_size / 2,
-                                      game.tile_size / 2, game.tile_size / 2,
-                                      BROWN);
-                    } else {
-                        DrawRectangle((x * game.tile_size), 
-                                      (y * game.tile_size),
-                                      game.tile_size, game.tile_size,
-                                      DARKGREEN);
-                    }
-                        
+                    DrawRectangle(x * game.tile_size, y * game.tile_size,
+                                  game.tile_size, game.tile_size, GREEN);
+                    DrawRectangle((x * game.tile_size), 
+                                  (y * game.tile_size),
+                                  game.tile_size, game.tile_size / 2,
+                                  DARKGREEN);
+                    DrawRectangle((x * game.tile_size) + game.tile_size / 4,
+                                  (y * game.tile_size) + game.tile_size / 2,
+                                  game.tile_size / 2, game.tile_size / 2,
+                                  BROWN);
+                    post_renders[(post_render_count * 2)] = x;
+                    post_renders[(post_render_count * 2) + 1] = y;
+                    post_render_count++;
                 } else if (tile == FOREST_FLOOR) {
-                    int distance = sqrt(
-                        ((player_tx - x) * (player_tx - x)) +
-                        ((player_ty - y) * (player_ty - y)));
-                    if (distance < 8 && player_tile == FOREST_FLOOR) {
-                        color = GREEN;
-                    } else {
-                        color = DARKGREEN;
-                    }
 		    DrawRectangle((x * game.tile_size), 
                                   (y * game.tile_size),
 			          game.tile_size, game.tile_size,
-				  color);
+				  GREEN);
+                    post_renders[(post_render_count * 2)] = x;
+                    post_renders[(post_render_count * 2) + 1] = y;
+                    post_render_count++;
                 } else if (tile == DEEP_TREE) {
                     DrawRectangle(x * game.tile_size, y * game.tile_size,
                                   game.tile_size, game.tile_size,
@@ -540,44 +528,20 @@ int main(void)
                    player.y, player.radius,
                    player.color);
                 
-        /*Vector2 mouse = GetScreenToWorld2D(GetMousePosition(), camera);
-        DrawCircle(mouse.x, mouse.y, player.radius, player.color);
-        float angle = Vector2LineAngle((Vector2) {player.x, player.y}, mouse);
-        float anglecos = cos(angle);
-        float anglesin = 0 - sin(angle);
-        int circle_x = player.x + (20 * anglecos);
-        int circle_y = player.y + (20 * anglesin);
-        for (int i = 0; i < 5; i++) {
-            int circle_x = player.x + ((i * 10) * anglecos);
-            int circle_y = player.y + ((i * 10) * anglesin);
-            DrawCircle(circle_x, circle_y, player.radius / 2, player.color);
-        }*/
-
-        /*for (int i = 0; i < tree_point_count; i++) {
-            Vector2 point = tree_points[i];
-            Vector2 line = {player.x, player.y};
-            float angle = Vector2LineAngle((Vector2) {
-                player.x, 
-                player.y}, point);
-            float anglecos = cos(angle);
-            float anglesin = 0 - sin(angle);
-            int count = 0;
-            while (abs(line.x - point.x) > 5 || abs(line.y - point.y) > 5) {
-                line.x = (int) (player.x + (count * anglecos));
-                line.y = (int) (player.y + (count * anglesin));
-                //printf("%d, %d\n");
-                DrawLine(player.x, player.y, line.x, line.y, RED);
-                count++;
-            }
-        }*/
-
 	EndMode2D();
 
-        if (player_tile == FOREST_FLOOR) {
+        //if (player_tile == FOREST_FLOOR) {
             BeginShaderMode(shdr_fov);
-                DrawRectangle(0, 0, game.screen_w, game.screen_h, BROWN);
+                for (int i = 0; i < post_render_count; i++) {
+                    int x = post_renders[i * 2] * game.tile_size;
+                    int y = post_renders[(i * 2) + 1] * game.tile_size;
+                    Vector2 pos = GetWorldToScreen2D((Vector2) {x, y}, camera);
+                    DrawRectangle(pos.x,
+                                  pos.y, game.tile_size,
+                                  game.tile_size, DARKGREEN);
+                }
             EndShaderMode();
-        }
+        //}
 
         EndDrawing();
     }
