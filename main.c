@@ -467,13 +467,30 @@ int main(void)
 	    }
 	}
 
+        if (player_tile != FOREST_FLOOR) {
+            for (int i = 0; i < post_render_count; i++) {
+                int x = post_renders[i * 2] * game.tile_size;
+                int y = post_renders[(i * 2) + 1] * game.tile_size;
+                DrawRectangle(x,
+                              y, game.tile_size,
+                              game.tile_size, DARKGREEN);
+            }
+        }
+
+
+        if (player_tile == WATER) {
+            DrawCircle(player.x,
+                       player.y, player.radius * 1.5,
+                       DARKBROWN);
+        }
 	DrawCircle(player.x,
                    player.y, player.radius,
                    player.color);
+
                 
 	EndMode2D();
 
-        //if (player_tile == FOREST_FLOOR) {
+        if (player_tile == FOREST_FLOOR) {
             BeginShaderMode(shdr_fov);
                 for (int i = 0; i < post_render_count; i++) {
                     int x = post_renders[i * 2] * game.tile_size;
@@ -484,7 +501,7 @@ int main(void)
                                   game.tile_size * camera.zoom, DARKGREEN);
                 }
             EndShaderMode();
-        //}
+        }
 
         EndDrawing();
     }
