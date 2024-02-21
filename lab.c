@@ -30,7 +30,7 @@ void Lab_extend(Map *map, int x, int y, int dx, int dy) {
 }
 
 Map Map_createLab() {
-    Map map = Map_create(80, 20);
+    Map map = Map_create(80, 80);
 
     for (int y = 0; y < map.h; y++) {
         for (int x = 0; x < map.w; x++) {
@@ -47,7 +47,7 @@ Map Map_createLab() {
 
     int door_x, door_y, door, i, chance;
 
-    door_x = randomEvenBetween(2, (map.w / 2) - 1);
+    door_x = randomEvenBetween(2, map.w - 1);
     door_y = randomEvenBetween(2, map.h - 1);
 
     map.tiles[door_y][door_x] = DOOR;
@@ -55,7 +55,7 @@ Map Map_createLab() {
     Lab_extend(&map, door_x, door_y, 0, -1);
     Lab_extend(&map, door_x, door_y, 0, 1);
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 10; i++) {
         door_x = randomOddBetween(2, map.w - 2);
         door_y = randomOddBetween(2, map.h - 2);
 
@@ -65,29 +65,15 @@ Map Map_createLab() {
         Lab_extend(&map, door_x, door_y, -1, 0);
     }
 
-    for (int i = 0; i < 5; i++) {
-        int chance = GetRandomValue(0, 99);
-        if (chance < 1 / 3) {
-            door_x = randomOddBetween(2, map.w - 2);
-            door_y = randomOddBetween(2, map.h - 2);
-        } else {
-            door_x = randomEvenBetween(2, map.w - 2);
-            door_y = randomEvenBetween(2, map.h - 2);
-        }
+    for (int i = 0; i < 10; i++) {
+        door_x = randomEvenBetween(2, map.w - 2);
+        door_y = randomEvenBetween(2, map.h - 2);
 
         map.tiles[door_y][door_x] = DOOR;
 
-        if (chance < 1 / 3) {
-            Lab_extend(&map, door_x, door_y, 1, 0);
-            Lab_extend(&map, door_x, door_y, -1, 0);
-        } else {
-            Lab_extend(&map, door_x, door_y, 0, 1);
-            Lab_extend(&map, door_x, door_y, 0, -1);
-        }
+        Lab_extend(&map, door_x, door_y, 0, 1);
+        Lab_extend(&map, door_x, door_y, 0, -1);
     }
 
     return map;
 }
-
-
-    
