@@ -34,19 +34,16 @@ int main(void)
     game.scale = 1;
     game.tile_size = 32;
 
-    Map map = Map_create(400, 400);
+    InitWindow(game.screen_w, game.screen_h, "Mango Mango Monsters");
 
-    int seed = (int) time(NULL);
-    SetRandomSeed(seed);
+    SetTargetFPS(60);            // Set our game to run at 60 frames-per-second
+    
+    Map map = Map_create(400, 400);
 
     Map_perlinify(&map);
 
     Map_enhanceForests(&map);
 
-    InitWindow(game.screen_w, game.screen_h, "Mango Mango Monsters");
-
-    SetTargetFPS(60);            // Set our game to run at 60 frames-per-second
-    
     Entity player = Player_create(&game);
     /*player.x = game.tile_size / 2;
     player.y = game.tile_size / 2;*/
@@ -60,6 +57,7 @@ int main(void)
 	if (tile == GRASS) {
 	    player.x = x * game.tile_size;
 	    player.y = y * game.tile_size;
+            map.tiles[y][x] = STAIRS;
 	    player_pos_found = true;
 	}
     }
@@ -93,6 +91,10 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+        int player_tx = (int) player.x / game.tile_size;
+        int player_ty = (int) player.y / game.tile_size;
+        int player_tile = getTile(&map, player_tx, player_ty);
+        
         x_speed = 0;
         y_speed = 0;
 
@@ -100,6 +102,12 @@ int main(void)
 	if (IsKeyDown(KEY_RIGHT)) x_speed = reg_speed;
 	if (IsKeyDown(KEY_UP)) y_speed = -reg_speed;
 	if (IsKeyDown(KEY_DOWN)) y_speed = reg_speed;
+        if (IsKeyPressed(KEY_F) && player_tile == STAIRS) {
+            Map_perlinify(&map);
+
+            Map_enhanceForests(&map);
+        }
+
 	if (IsKeyPressed(KEY_W)) {
             camera.zoom += 0.0625;
             fov.radius = default_fov_radius * camera.zoom;
@@ -145,9 +153,9 @@ int main(void)
         player.x += x_speed;
         player.y += y_speed;
         
-        int player_tx = (int) player.x / game.tile_size;
-        int player_ty = (int) player.y / game.tile_size;
-        int player_tile = getTile(&map, player_tx, player_ty);
+        player_tx = (int) player.x / game.tile_size;
+        player_ty = (int) player.y / game.tile_size;
+        player_tile = getTile(&map, player_tx, player_ty);
 
         for (int dy = player_ty - 1; dy < player_ty + 2; dy++) {
             for (int dx = player_tx - 1; dx < player_tx + 2; dx++) {
@@ -285,6 +293,13 @@ int main(void)
                     DrawRectangle(x * game.tile_size, y * game.tile_size,
                                   game.tile_size, game.tile_size,
                                   DARKGREEN);
+                } else if (tile == STAIRS) {
+                    DrawRectangle(x * game.tile_size, y * game.tile_size,
+                                  game.tile_size, game.tile_size,
+                                  BLACK);
+                    DrawRectangle(x * game.tile_size, y * game.tile_size,
+                                  game.tile_size, game.tile_size / 2,
+                                  GRAY);
                 } else {
 		    DrawRectangle(x * game.tile_size, y * game.tile_size,
 			          game.tile_size, game.tile_size, color);
