@@ -69,4 +69,6 @@ int getSouthWestTile(Map *map, int x, int y);
 int getNorthWestTile(Map *map, int x, int y);
 bool isSolid(Map *map, int x, int y);
 
+void Map_perlinify(Map *map);
+void Map_enhanceForests(Map *map);
 #endif
