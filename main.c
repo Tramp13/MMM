@@ -283,7 +283,7 @@ int main(void)
     fov.position = GetWorldToScreen2D((Vector2)
         {player.x, (game.screen_h - player.y)}, camera);
     fov.position.y = game.screen_h - fov.position.y;
-    fov.radius = 64.0f;
+    fov.radius = 128.0f;
 
     fov.position_loc = GetShaderLocation(shdr_fov, "fov.pos\0");
     fov.radius_loc = GetShaderLocation(shdr_fov, "fov.radius\0");
@@ -305,13 +305,13 @@ int main(void)
 	if (IsKeyDown(KEY_DOWN)) y_speed = reg_speed;
 	if (IsKeyPressed(KEY_W)) {
             camera.zoom += 0.0625;
-            fov.radius = 64 * camera.zoom;
+            fov.radius = 128 * camera.zoom;
             SetShaderValue(shdr_fov, fov.radius_loc, &fov.radius,
                    SHADER_UNIFORM_FLOAT);
         }
 	if (IsKeyPressed(KEY_S)) {
             camera.zoom -= 0.0625;
-            fov.radius = 64 * camera.zoom;
+            fov.radius = 128 * camera.zoom;
             SetShaderValue(shdr_fov, fov.radius_loc, &fov.radius,
                    SHADER_UNIFORM_FLOAT);
         }
