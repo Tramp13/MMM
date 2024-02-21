@@ -5,9 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void Map_perlinify(Map *map) {
-    int seed = (int) time(NULL);
-    SetRandomSeed(seed);
+void Map_perlinify(Map *map, int seed) {
 
     // Render perlin noise
     for (int y = 0; y < map->h; y++) {

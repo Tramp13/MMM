@@ -1,4 +1,4 @@
-OBJS = main.c entity.c player.c perlin.c map.c overworld.c
+OBJS = main.c entity.c player.c perlin.c map.c overworld.c lab.c
 
 CC = gcc
 

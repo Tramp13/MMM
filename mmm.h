@@ -14,7 +14,10 @@ enum Tile {
     TREE,
     FOREST_TREE,
     DEEP_TREE,
-    STAIRS
+    STAIRS,
+    STONE_WALL,
+    STONE_FLOOR,
+    DOOR
 };
 
 typedef struct GameStruct Game;
@@ -62,6 +65,8 @@ int getSouthWestTile(Map *map, int x, int y);
 int getNorthWestTile(Map *map, int x, int y);
 bool isSolid(Map *map, int x, int y);
 
-void Map_perlinify(Map *map);
+Map Map_createLab();
+
+void Map_perlinify(Map *map, int seed);
 void Map_enhanceForests(Map *map);
 #endif

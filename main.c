@@ -27,6 +27,10 @@ typedef struct FOV {
 // Program main entry point
 int main(void)
 {
+
+    int seed = (int) time(NULL);
+    SetRandomSeed(seed);
+
     // Initialization
     Game game;
     game.screen_w = 800;
@@ -40,7 +44,7 @@ int main(void)
     
     Map map = Map_create(400, 400);
 
-    Map_perlinify(&map);
+    Map_perlinify(&map, seed);
 
     Map_enhanceForests(&map);
 
@@ -103,9 +107,10 @@ int main(void)
 	if (IsKeyDown(KEY_UP)) y_speed = -reg_speed;
 	if (IsKeyDown(KEY_DOWN)) y_speed = reg_speed;
         if (IsKeyPressed(KEY_F) && player_tile == STAIRS) {
-            Map_perlinify(&map);
-
-            Map_enhanceForests(&map);
+            Map_free(&map);
+            map = Map_createLab();
+            player.x = 2 * game.tile_size;
+            player.y = 2 * game.tile_size;
         }
 
 	if (IsKeyPressed(KEY_W)) {
@@ -300,6 +305,18 @@ int main(void)
                     DrawRectangle(x * game.tile_size, y * game.tile_size,
                                   game.tile_size, game.tile_size / 2,
                                   GRAY);
+                } else if (tile == STONE_WALL) {
+                    DrawRectangle(x * game.tile_size, y * game.tile_size,
+                                  game.tile_size, game.tile_size,
+                                  DARKGRAY);
+                } else if (tile == STONE_FLOOR) {
+                    DrawRectangle(x * game.tile_size, y * game.tile_size,
+                                  game.tile_size, game.tile_size,
+                                  GRAY);
+                } else if (tile == DOOR) {
+                    DrawRectangle(x * game.tile_size, y * game.tile_size,
+                                  game.tile_size, game.tile_size,
+                                  DARKBROWN);
                 } else {
 		    DrawRectangle(x * game.tile_size, y * game.tile_size,
 			          game.tile_size, game.tile_size, color);
