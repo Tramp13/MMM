@@ -61,26 +61,6 @@ int distance(int ax, int ay, int bx, int by) {
     return sqrt(((ax - bx) * (ax - bx)) + ((ay - by) * (ay - by)));
 }
 
-bool isVisible(Map *map, int ax, int ay, int bx, int by) {
-    Vector2 walk_point = {ax, ay};
-    float angle = Vector2LineAngle((Vector2) {ax, ay},
-                                   (Vector2) {bx, by});
-    float anglecos = cos(angle);
-    float anglesin = 0 - sin(angle);
-    int max_distance = distance(ax, ay, bx, by);
-    int count = 0;
-    int walk_distance = 0;
-    while (walk_distance < max_distance) {
-        walk_point.x = (int) (ax + (count * anglecos));
-        walk_point.y = (int) (ay + (count * anglesin));
-        walk_distance = distance(ax, ay, walk_point.x, walk_point.y);
-        int walk_tile = getTile(map, walk_point.x, walk_point.y);
-        if (walk_tile == FOREST_TREE) return false;
-        count++;
-    }
-    return true;
-}
-
 typedef struct FOV {
     Vector2 position;
     float radius;
@@ -108,7 +88,6 @@ int main(void)
     for (int y = 0; y < map.h; y++) {
 	for (int x = 0; x < map.w; x++) {
 	    float tile = perlin2d(x, y, 0.0075, 6, seed);
-	    int tile_index = getTileIndex(&map, x, y);
 	    int tile_type;
 	    if (tile < 0.55) {
 		tile_type = WATER;
@@ -129,21 +108,18 @@ int main(void)
 		    tile_type = FOREST_FLOOR;
 		}
 	    }
-	    map.tiles[tile_index] = tile_type;
+	    map.tiles[y][x] = tile_type;
 	}
     }
 
     //smooth forests
-    size_t tiles_memory_size = sizeof(int) * (map.w * map.h);
-    int *new_tiles = malloc(tiles_memory_size);
-    //int new_tiles[map.w * map.h];
     int iterations_left = 2;
+    Map new_map = Map_create(400, 400);
     while (iterations_left > 0) {
-        memcpy(new_tiles, map.tiles, tiles_memory_size);
+        Map_copy(&new_map, &map);
         for (int y = 0; y < map.h; y++) {
             for (int x = 0; x < map.w; x++) {
                 int tile = getTile(&map, x, y);
-                int tile_index = getTileIndex(&map, x, y);
                 bool is_border = (x == 0 || y == 0 ||
                                   x == map.w - 1 || y == map.h - 1);
                 if (!is_border) {
@@ -151,101 +127,47 @@ int main(void)
                     for (int dy = y - 1; dy < y + 2; dy++) {
                         for (int dx = x - 1; dx < x + 2; dx++) {
                             int delta_tile = getTile(&map, dx, dy);
-                            int delta_index = getTileIndex(&map, dx, dy);
                             if (delta_tile == FOREST_TREE &&
-                                delta_index != tile_index) {
+                                !(x == dx && y == dy)) {
                                 wall_neighbors++;
                             }
                         }
                     }
                     //printf("tile: %d, tree neighbors: %d\n", tile, wall_neighbors);
                     if (tile == FOREST_TREE && wall_neighbors < 4) {
-                        new_tiles[tile_index] = FOREST_FLOOR;
+                        new_map.tiles[y][x] = FOREST_FLOOR;
                         //printf("remove tree\n");
                     }
                     if (tile == GRASS && wall_neighbors >= 5) {
-                        new_tiles[tile_index] = FOREST_TREE;
+                        new_map.tiles[y][x] = FOREST_TREE;
                         //printf("add tree\n");
                     }
                 }
             }
         }
-        memcpy(map.tiles, new_tiles, tiles_memory_size);
+        Map_copy(&map, &new_map);
         iterations_left--;
         printf("cool\n");
     }
 
     
     // Hide redundant trees
-    memcpy(new_tiles, map.tiles, tiles_memory_size);
+    Map_copy(&new_map, &map);
     for (int y = 1; y < map.h - 1; y++) {
 	for (int x = 1; x < map.w - 1; x++) {
             int tile = getTile(&map, x, y);
-	    int tile_index = getTileIndex(&map, x, y);
 	    if (tile == FOREST_TREE) {
                 int south_tile = getSouthTile(&map, x, y);
                 if (south_tile == FOREST_TREE) {
-                    new_tiles[tile_index] = DEEP_TREE;
+                    new_map.tiles[y][x] = DEEP_TREE;
                 }
 	    }
 	}
     }
-    memcpy(map.tiles, new_tiles, tiles_memory_size);
+    Map_copy(&map, &new_map);
     printf("Hell yeah\n");
 
-    /*// Soften corners
-    memcpy(new_tiles, map.tiles, tiles_memory_size);
-    for (int y = 0; y < map.h; y++) {
-	for (int x = 0; x < map.w; x++) {
-	    int tile_index = getTileIndex(&map, x, y);
-	    int tile = getTile(&map, x, y);
-            int north_tile = getNorthTile(&map, x, y);
-            int east_tile = getEastTile(&map, x, y);
-            int south_tile = getSouthTile(&map, x, y);
-            int west_tile = getWestTile(&map, x, y);;
-	    if (tile == SAND) {
-		if (south_tile == WATER) {
-		    if (east_tile == WATER) {
-			new_tiles[tile_index] = NW_SAND_SE_WATER;
-		    }
-		    if (west_tile == WATER) {
-			new_tiles[tile_index] = NE_SAND_SW_WATER;
-		    }
-		}
-		if (north_tile == WATER) {
-		    if (east_tile == WATER) {
-			new_tiles[tile_index] = SW_SAND_NE_WATER;
-		    }
-		    if (west_tile == WATER) {
-			new_tiles[tile_index] = SE_SAND_NW_WATER;
-		    }
-		}
-	    }
-	    if (tile == GRASS) {
-		if (south_tile == SAND) {
-		    if (east_tile == SAND) {
-			new_tiles[tile_index] = NW_GRASS_SE_SAND;
-		    }
-		    if (west_tile == SAND) {
-			new_tiles[tile_index] = NE_GRASS_SW_SAND;
-		    }
-		}
-		if (north_tile == SAND) {
-		    if (east_tile == SAND) {
-			new_tiles[tile_index] = SW_GRASS_NE_SAND;
-		    }
-		    if (west_tile == SAND) {
-			new_tiles[tile_index] = SE_GRASS_NW_SAND;
-		    }
-		}
-	    }
-	}
-    }
-    memcpy(map.tiles, new_tiles, tiles_memory_size);
-    printf("yep\n");
-    //*/
-
-    free(new_tiles);
+    Map_free(&new_map);
 
     InitWindow(game.screen_w, game.screen_h, "Mango Mango Monsters");
 
@@ -437,7 +359,6 @@ int main(void)
 	for (int y = top; y <= bottom; y++) {
 	   for (int x = left; x <= right; x++) {
 		Color color;
-		int tile_index = getTileIndex(&map, x, y);
 		int tile = getTile(&map, x, y);
 		if (tile == WATER) {
 		    color = BLUE;

@@ -49,13 +49,14 @@ typedef struct MapStruct Map;
 struct MapStruct {
     int w;
     int h;
-    int *tiles;
+    int **tiles;
     int being_count;
     Entity beings[MAX_BEINGS];
 };
 
 Map Map_create(int w, int h);
 void Map_free(Map *map);
+void Map_copy(Map *map_a, Map *map_b);
 int getTile(Map *map, int x, int y);
 int getTileIndex(Map *map, int x, int y);
 int getNorthTile(Map *map, int x, int y);
