@@ -107,3 +107,19 @@ bool isSolid(Map *map, int x, int y) {
         return false;
     }
 }
+
+Vector2 Map_findRandomTile(Map *map, int tile_type) {
+    bool tile_found = false;
+    Vector2 tile_pos;
+    while (!tile_found) {
+	int x = GetRandomValue(0, map->w - 1);
+	int y = GetRandomValue(0, map->h - 1);
+        int tile = getTile(map, x, y);
+	if (tile == tile_type) {
+	    tile_pos.y = y;
+	    tile_pos.x = x;
+	    tile_found = true;
+	}
+    }
+    return tile_pos;
+}

@@ -53,18 +53,10 @@ int main(void)
     player.y = game.tile_size / 2;*/
 
     //find free space for player
-    bool player_pos_found = false;
-    while (!player_pos_found) {
-	int x = GetRandomValue(0, map.w - 1);
-	int y = GetRandomValue(0, map.h - 1);
-        int tile = getTile(&map, x, y);
-	if (tile == GRASS) {
-	    player.x = x * game.tile_size;
-	    player.y = y * game.tile_size;
-            map.tiles[y][x] = STAIRS;
-	    player_pos_found = true;
-	}
-    }
+    Vector2 player_pos = Map_findRandomTile(&map, GRASS);
+    player.x = player_pos.x * game.tile_size;
+    player.y = player_pos.y * game.tile_size;
+    map.tiles[(int) player_pos.y][(int) player_pos.x] = STAIRS;
 
     Camera2D camera = { 0 };
     camera.target = (Vector2){player.x, player.y};
@@ -109,8 +101,9 @@ int main(void)
         if (IsKeyPressed(KEY_F) && player_tile == STAIRS) {
             Map_free(&map);
             map = Map_createLab();
-            player.x = 2 * game.tile_size;
-            player.y = 2 * game.tile_size;
+            player_pos = Map_findRandomTile(&map, STONE_FLOOR);
+            player.x = player_pos.x * game.tile_size;
+            player.y = player_pos.y * game.tile_size;
         }
 
 	if (IsKeyPressed(KEY_W)) {

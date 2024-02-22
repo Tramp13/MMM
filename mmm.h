@@ -64,6 +64,7 @@ int getSouthEastTile(Map *map, int x, int y);
 int getSouthWestTile(Map *map, int x, int y);
 int getNorthWestTile(Map *map, int x, int y);
 bool isSolid(Map *map, int x, int y);
+Vector2 Map_findRandomTile(Map *map, int tile_type);
 
 Map Map_createLab();
 
