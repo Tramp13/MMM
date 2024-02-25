@@ -66,9 +66,9 @@ int main(void)
     int x_speed = 0;
     int y_speed = 0;
     int reg_speed = game.tile_size / 8;
+    
 
-    Shader shdr_fov = LoadShader(0, "fov.fs");
-
+    Shader shdr_fov = LoadShader(0, TextFormat("fov%i.fs", GLSL_VERSION));
     FOV fov;
     fov.position = GetWorldToScreen2D((Vector2)
         {player.x, (game.screen_h - player.y)}, camera);
