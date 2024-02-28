@@ -36,7 +36,7 @@ int main(void)
     game.screen_w = 800;
     game.screen_h = 450;
     game.scale = 1;
-    game.tile_size = 32;
+    game.tile_size = 36;
 
     InitWindow(game.screen_w, game.screen_h, "Mango Mango Monsters");
 
