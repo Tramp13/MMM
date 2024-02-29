@@ -2,6 +2,8 @@
 
 in vec2 fragTexCoord;
 in vec4 fragColor;
+uniform sampler2D texturem;
+varying vec2 texcoord;
 
 out vec4 finalColor;
 
@@ -24,5 +26,5 @@ void main() {
         alpha = d / fov.radius;
     }
 
-    finalColor = vec4(0, 0.46, 0.17, alpha);
+    finalColor = vec4(0, 0, 0, alpha);
 }

@@ -21,5 +21,5 @@ void main() {
         alpha = d / fov.radius;
     }
 
-    gl_FragColor = vec4(0, 0.46, 0.17, alpha);
+    gl_FragColor = vec4(0, 0, 0, alpha);
 }

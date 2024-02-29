@@ -40,6 +40,16 @@ int main(void)
 
     InitWindow(game.screen_w, game.screen_h, "Mango Mango Monsters");
 
+    Texture2D urizen = LoadTexture("urizen.png");
+    Rectangle grass_rect = {40, 118, 12, 12};
+    Rectangle tree_rect = {1, 105, 12, 12};
+    Rectangle water_rect = {118, 534, 12, 12};
+    Rectangle sand_rect = {105, 443, 12, 12};
+    Rectangle shade_rect = {144, 443, 12, 12};
+    Rectangle wall_rect = {118, 534, 12, 12};
+    Rectangle floor_rect = {105, 443, 12, 12};
+    Rectangle stair_rect = {105, 443, 12, 12};
+
     SetTargetFPS(60);            // Set our game to run at 60 frames-per-second
     
     Map map = Map_create(400, 400);
@@ -236,95 +246,70 @@ int main(void)
 	int right = bottom_right.x / game.tile_size;
         int post_renders[2000];
         int post_render_count = 0;
+        Rectangle dest_rect;
+        Rectangle src_rect;
+        Vector2 origin = (Vector2) {0, 0};
 
 	for (int y = top; y <= bottom; y++) {
 	   for (int x = left; x <= right; x++) {
-		Color color;
+	        dest_rect = (Rectangle) {(x * game.tile_size),
+			     (y * game.tile_size),
+			     game.tile_size, game.tile_size};
 		int tile = getTile(&map, x, y);
 		if (tile == WATER) {
-		    color = BLUE;
+                    DrawTexturePro(urizen, water_rect, dest_rect, origin, 0,
+                                   WHITE);
 		} else if (tile == SAND) {
-		    color = WHITE;
+                    DrawTexturePro(urizen, sand_rect, dest_rect, origin, 0,
+                                   WHITE);
 		} else if (tile == GRASS) {
-		    color = GREEN;
-		} else {
-		    color = BLACK;
-		}
-		if (tile == TREE) {
-		    /*Vector2 a, b, c;
-		    a = (Vector2){x * game.tile_size,
-			 (y * game.tile_size) + game.tile_size};
-		    b = (Vector2){(x * game.tile_size) + game.tile_size,
-			 (y * game.tile_size) + game.tile_size};
-		    c = (Vector2){(x * game.tile_size) + (game.tile_size / 2),
-			 y * game.tile_size};*/
-		    DrawRectangle((x * game.tile_size),
-				  (y * game.tile_size),
-			          game.tile_size, game.tile_size,
-				  BROWN);
-		    DrawRectangle((x * game.tile_size), 
-                                  (y * game.tile_size),
-			          game.tile_size, game.tile_size * 0.8f,
-				  DARKGREEN);
-		    //DrawTriangle(a, b, c, DARKGREEN);
+                    DrawTexturePro(urizen, grass_rect, dest_rect, origin, 0,
+                                   WHITE);
+		} else if (tile == TREE) {
+                    DrawTexturePro(urizen, tree_rect, dest_rect, origin, 0,
+                                   WHITE);
 		} else if (tile == FOREST_TREE) {
-		    DrawRectangle((x * game.tile_size),
-				  (y * game.tile_size),
-			          game.tile_size, game.tile_size,
-				  BROWN);
-		    DrawRectangle((x * game.tile_size), 
-                                  (y * game.tile_size),
-			          game.tile_size, game.tile_size * 0.8f,
-				  DARKGREEN);
+                    DrawTexturePro(urizen, tree_rect, dest_rect, origin, 0,
+                                   WHITE);
                     post_renders[(post_render_count * 2)] = x;
                     post_renders[(post_render_count * 2) + 1] = y;
                     post_render_count++;
                 } else if (tile == FOREST_FLOOR) {
-		    DrawRectangle((x * game.tile_size), 
-                                  (y * game.tile_size),
-			          game.tile_size, game.tile_size,
-				  GREEN);
+                    DrawTexturePro(urizen, grass_rect, dest_rect, origin, 0,
+                                   WHITE);
                     post_renders[(post_render_count * 2)] = x;
                     post_renders[(post_render_count * 2) + 1] = y;
                     post_render_count++;
                 } else if (tile == DEEP_TREE) {
-                    DrawRectangle(x * game.tile_size, y * game.tile_size,
-                                  game.tile_size, game.tile_size,
-                                  DARKGREEN);
+                    DrawTexturePro(urizen, tree_rect, dest_rect, origin, 0,
+                                   WHITE);
+                    post_renders[(post_render_count * 2)] = x;
+                    post_renders[(post_render_count * 2) + 1] = y;
+                    post_render_count++;
                 } else if (tile == STAIRS) {
-                    DrawRectangle(x * game.tile_size, y * game.tile_size,
-                                  game.tile_size, game.tile_size,
-                                  BLACK);
-                    DrawRectangle(x * game.tile_size, y * game.tile_size,
-                                  game.tile_size, game.tile_size / 2,
-                                  GRAY);
+                    DrawTexturePro(urizen, stair_rect, dest_rect, origin, 0,
+                                   WHITE);
                 } else if (tile == STONE_WALL) {
-                    DrawRectangle(x * game.tile_size, y * game.tile_size,
-                                  game.tile_size, game.tile_size,
-                                  DARKGRAY);
+                    DrawTexturePro(urizen, wall_rect, dest_rect, origin, 0,
+                                   WHITE);
                 } else if (tile == STONE_FLOOR) {
-                    DrawRectangle(x * game.tile_size, y * game.tile_size,
-                                  game.tile_size, game.tile_size,
-                                  GRAY);
+                    DrawTexturePro(urizen, floor_rect, dest_rect, origin, 0,
+                                   WHITE);
                 } else if (tile == DOOR) {
-                    DrawRectangle(x * game.tile_size, y * game.tile_size,
-                                  game.tile_size, game.tile_size,
-                                  DARKBROWN);
-                } else {
-		    DrawRectangle(x * game.tile_size, y * game.tile_size,
-			          game.tile_size, game.tile_size, color);
-		}
+                    DrawTexturePro(urizen, floor_rect, dest_rect, origin, 0,
+                                   WHITE);
+                }
 	    }
 	}
 
-        if (player_tile != FOREST_FLOOR) {
-            for (int i = 0; i < post_render_count; i++) {
-                int x = post_renders[i * 2] * game.tile_size;
-                int y = post_renders[(i * 2) + 1] * game.tile_size;
-                DrawRectangle(x,
-                              y, game.tile_size,
-                              game.tile_size, DARKGREEN);
-            }
+        for (int i = 0; i < post_render_count; i++) {
+            int x = post_renders[i * 2] * game.tile_size;
+            int y = post_renders[(i * 2) + 1] * game.tile_size;
+            dest_rect = (Rectangle) {(x * game.tile_size),
+                         (y * game.tile_size),
+                         game.tile_size, game.tile_size};
+            DrawTexturePro(urizen, shade_rect, dest_rect, origin, 0,
+                           WHITE);
         }
 
 
@@ -340,18 +325,18 @@ int main(void)
                 
 	EndMode2D();
 
-        if (player_tile == FOREST_FLOOR) {
-            BeginShaderMode(shdr_fov);
-                for (int i = 0; i < post_render_count; i++) {
-                    int x = post_renders[i * 2] * game.tile_size;
-                    int y = post_renders[(i * 2) + 1] * game.tile_size;
-                    Vector2 pos = GetWorldToScreen2D((Vector2) {x, y}, camera);
-                    DrawRectangle(pos.x,
-                                  pos.y, game.tile_size * camera.zoom,
-                                  game.tile_size * camera.zoom, DARKGREEN);
-                }
-            EndShaderMode();
-        }
+        BeginShaderMode(shdr_fov);
+            for (int i = 0; i < post_render_count; i++) {
+                int x = post_renders[i * 2] * game.tile_size;
+                int y = post_renders[(i * 2) + 1] * game.tile_size;
+                Vector2 pos = GetWorldToScreen2D((Vector2) {x, y}, camera);
+                dest_rect = (Rectangle) {pos.x, pos.y,
+                         game.tile_size * camera.zoom,
+                         game.tile_size * camera.zoom};
+                DrawTexturePro(urizen, shade_rect, dest_rect, origin, 0,
+                               WHITE);
+            }
+        EndShaderMode();
 
         EndDrawing();
     }
