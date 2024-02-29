@@ -49,6 +49,7 @@ int main(void)
     Rectangle wall_rect = {118, 534, 12, 12};
     Rectangle floor_rect = {105, 443, 12, 12};
     Rectangle stair_rect = {105, 443, 12, 12};
+    Rectangle player_rect = {1, 183, 12, 12};
 
     SetTargetFPS(60);            // Set our game to run at 60 frames-per-second
     
@@ -271,21 +272,21 @@ int main(void)
 		} else if (tile == FOREST_TREE) {
                     DrawTexturePro(urizen, tree_rect, dest_rect, origin, 0,
                                    WHITE);
-                    post_renders[(post_render_count * 2)] = x;
+                    /*post_renders[(post_render_count * 2)] = x;
                     post_renders[(post_render_count * 2) + 1] = y;
-                    post_render_count++;
+                    post_render_count++;*/
                 } else if (tile == FOREST_FLOOR) {
                     DrawTexturePro(urizen, grass_rect, dest_rect, origin, 0,
                                    WHITE);
-                    post_renders[(post_render_count * 2)] = x;
+                    /*post_renders[(post_render_count * 2)] = x;
                     post_renders[(post_render_count * 2) + 1] = y;
-                    post_render_count++;
+                    post_render_count++;*/
                 } else if (tile == DEEP_TREE) {
                     DrawTexturePro(urizen, tree_rect, dest_rect, origin, 0,
                                    WHITE);
-                    post_renders[(post_render_count * 2)] = x;
+                    /*post_renders[(post_render_count * 2)] = x;
                     post_renders[(post_render_count * 2) + 1] = y;
-                    post_render_count++;
+                    post_render_count++;*/
                 } else if (tile == STAIRS) {
                     DrawTexturePro(urizen, stair_rect, dest_rect, origin, 0,
                                    WHITE);
@@ -318,14 +319,16 @@ int main(void)
                        player.y, player.radius * 1.5,
                        DARKBROWN);
         }
-	DrawCircle(player.x,
-                   player.y, player.radius,
-                   player.color);
+        dest_rect = (Rectangle) {player.x - (player.radius * 2),
+                                 player.y - (player.radius * 2),
+                                 game.tile_size, game.tile_size};
+        DrawTexturePro(urizen, player_rect, dest_rect, origin, 0,
+                       WHITE);
 
                 
 	EndMode2D();
 
-        BeginShaderMode(shdr_fov);
+        /*BeginShaderMode(shdr_fov);
             for (int i = 0; i < post_render_count; i++) {
                 int x = post_renders[i * 2] * game.tile_size;
                 int y = post_renders[(i * 2) + 1] * game.tile_size;
@@ -336,7 +339,7 @@ int main(void)
                 DrawTexturePro(urizen, shade_rect, dest_rect, origin, 0,
                                WHITE);
             }
-        EndShaderMode();
+        EndShaderMode();*/
 
         EndDrawing();
     }
