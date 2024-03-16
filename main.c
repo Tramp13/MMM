@@ -100,7 +100,7 @@ int main(void)
 	if (IsKeyDown(KEY_DOWN)) y_speed = reg_speed;
         if (IsKeyPressed(KEY_F) && player_tile == STAIRS) {
             Map_free(&map);
-            map = Map_createLab();
+            map = Map_createPuzzleDungeon();
             player_pos = Map_findRandomTile(&map, STONE_FLOOR);
             player.x = player_pos.x * game.tile_size;
             player.y = player_pos.y * game.tile_size;

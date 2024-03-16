@@ -1,10 +1,10 @@
-OBJS = main.c entity.c player.c perlin.c map.c overworld.c lab.c
+OBJS = main.c entity.c player.c perlin.c map.c overworld.c lab.c puzzlebox.c puzzledungeon.c
 
 CC = gcc
 
 #COMPILER_FLAGS = -w
 
-LINKER_FLAGS = -lraylib -lm
+LINKER_FLAGS = -lraylib -lm -lncurses
 
 OBJ_NAME = main
 

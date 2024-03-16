@@ -80,6 +80,7 @@ bool isSolid(Map *map, int x, int y);
 Vector2 Map_findRandomTile(Map *map, int tile_type);
 
 Map Map_createLab();
+Map Map_createPuzzleDungeon();
 
 void Map_perlinify(Map *map, int seed);
 void Map_enhanceForests(Map *map);
@@ -102,4 +103,6 @@ struct PuzzleBoxStruct {
     int x[20];
     int y[20];
 };
+
+PuzzleBox PuzzleBox_create();
 #endif

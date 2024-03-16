@@ -88,7 +88,7 @@ PuzzleBox PuzzleBox_create() {
     return puzzle_box;
 } 
 
-int main()
+int run()
 {
     int seed = (int) time(NULL);
     SetRandomSeed(seed);
