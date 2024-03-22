@@ -24,6 +24,26 @@ typedef struct FOV {
     unsigned int radius_loc;
 } FOV;
 
+int inventory_has(int item_type, Entity *inventory) {
+    for (int i = 0; i < 20; i++) {
+        if (inventory[i].type == item_type) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void inventory_add(Entity item, Entity *inventory) {
+    for (int i = 0; i < 20; i++) {
+        if (inventory[i].type == NO_ITEM) {
+            printf("Added");
+            inventory[i] = item;
+            return;
+        }
+    }
+    return;
+}
+
 // Program main entry point
 int main(void)
 {
@@ -43,6 +63,15 @@ int main(void)
     SetTargetFPS(60);            // Set our game to run at 60 frames-per-second
     
     Map map = Map_create(400, 400);
+    PuzzleBox map_data;
+    Entity items[20];
+    for (int i = 0; i < 20; i++) {
+        items[i].type = NO_ITEM;
+    }
+    Entity inventory[20];
+    for (int i = 0; i < 20; i++) {
+        inventory[i].type = NO_ITEM;
+    }
 
     Map_perlinify(&map, seed);
 
@@ -100,10 +129,31 @@ int main(void)
 	if (IsKeyDown(KEY_DOWN)) y_speed = reg_speed;
         if (IsKeyPressed(KEY_F) && player_tile == STAIRS) {
             Map_free(&map);
-            map = Map_createPuzzleDungeon();
-            player_pos = Map_findRandomTile(&map, STONE_FLOOR);
-            player.x = player_pos.x * game.tile_size;
-            player.y = player_pos.y * game.tile_size;
+            MapAndData map_and_data = Map_createPuzzleDungeon();
+            map = map_and_data.map;
+            map_data = map_and_data.puzzlebox;
+            player.x = (map_data.x[0] * (game.tile_size * 9)) +
+                        (game.tile_size * 2);
+            player.y = (map_data.y[0] * (game.tile_size * 9)) + 
+                        (game.tile_size * 2);
+            for (int i = 0; i < map_data.room_count; i++) {
+                if (map_data.puzzle_type[i] == KEY_PUZZLE) {
+                    Entity key;
+                    key.x = (map_data.x[i] * (game.tile_size * 9)) +
+                             game.tile_size;
+                    key.y = (map_data.y[i] * (game.tile_size * 9)) +
+                             game.tile_size;
+                    printf("key: %d %d\n", key.x, key.y);
+                    key.radius = game.tile_size / 4;
+                    key.color = YELLOW;
+                    key.type = KEY;
+                    for (int y = 0; y < 20; y++) {
+                        if (items[y].type == NO_ITEM) {
+                            items[y] = key;
+                        }
+                    }
+                }
+            }
         }
 
 	if (IsKeyPressed(KEY_W)) {
@@ -157,6 +207,24 @@ int main(void)
 
         for (int dy = player_ty - 1; dy < player_ty + 2; dy++) {
             for (int dx = player_tx - 1; dx < player_tx + 2; dx++) {
+                if (map.tiles[dy][dx] == LOCKED_DOOR) {
+                    Rectangle tile_rect;
+                    tile_rect.x = dx * game.tile_size;
+                    tile_rect.y = dy * game.tile_size;
+                    tile_rect.width = game.tile_size;
+                    tile_rect.height = game.tile_size;
+                    Vector2 player_center = (Vector2) {player.x, player.y};
+                    bool collides = CheckCollisionCircleRec(player_center,
+                                        player.radius, tile_rect);
+                    if (collides) {
+                        int key_index = inventory_has(KEY, inventory);
+                        if (key_index != -1) {
+                            map.tiles[dy][dx] = DOOR;
+                            inventory[key_index].type = NO_ITEM;
+                        }
+                    }
+                }
+        
                 bool is_solid = isSolid(&map, dx, dy);
                 if (is_solid) {
                     Rectangle tile_rect;
@@ -212,6 +280,23 @@ int main(void)
                         collides = CheckCollisionCircleRec(player_center,
                                         player.radius, tile_rect);
                     }
+                }
+            }
+        }
+
+        for (int i = 0; i < 20; i++) {
+            if (items[i].type != NO_ITEM) {
+                Vector2 player_center = (Vector2) {player.x, player.y};
+                Vector2 item_center = (Vector2) {items[i].x, items[i].y};
+                int collides = CheckCollisionCircles(player_center,
+                                                     player.radius,
+                                                     item_center,
+                                                     items[i].radius);
+                if (collides) {
+                    inventory_add(items[i], inventory);
+                    inventory_add(items[i], inventory);
+                    items[i].type = NO_ITEM;
+                    printf("1");
                 }
             }
         }
@@ -310,6 +395,10 @@ int main(void)
                     DrawRectangle(x * game.tile_size, y * game.tile_size,
                                   game.tile_size, game.tile_size,
                                   DARKBROWN);
+                } else if (tile == LOCKED_DOOR) {
+                    DrawRectangle(x * game.tile_size, y * game.tile_size,
+                                  game.tile_size, game.tile_size,
+                                  RED);
                 } else {
 		    DrawRectangle(x * game.tile_size, y * game.tile_size,
 			          game.tile_size, game.tile_size, color);
@@ -327,6 +416,13 @@ int main(void)
             }
         }
 
+        for (int i = 0; i < 20; i++) {
+            Entity key = items[i];
+            if (key.type == KEY) {
+                DrawCircle(key.x, key.y, key.radius, key.color);
+            }
+        }
+
 
         if (player_tile == WATER) {
             DrawCircle(player.x,
@@ -340,7 +436,7 @@ int main(void)
                 
 	EndMode2D();
 
-        if (player_tile == FOREST_FLOOR) {
+        /*if (player_tile == FOREST_FLOOR) {
             BeginShaderMode(shdr_fov);
                 for (int i = 0; i < post_render_count; i++) {
                     int x = post_renders[i * 2] * game.tile_size;
@@ -351,7 +447,7 @@ int main(void)
                                   game.tile_size * camera.zoom, DARKGREEN);
                 }
             EndShaderMode();
-        }
+        }*/
 
         EndDrawing();
     }

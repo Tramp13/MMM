@@ -11,7 +11,6 @@ Entity Entity_create(Game *game) {
     entity.speed = 0;
     entity.color = BLACK;
     entity.type = 0;
-    entity.update = &Entity_update;
     
     return entity;
 }

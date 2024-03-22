@@ -17,12 +17,13 @@ enum Tile {
     STAIRS,
     STONE_WALL,
     STONE_FLOOR,
-    DOOR
+    DOOR,
+    LOCKED_DOOR
 };
 
 enum PuzzleType {
     NO_PUZZLE = 0,
-    KEY = 1,
+    KEY_PUZZLE = 1,
     FIGHT = 2
 };
 
@@ -31,6 +32,11 @@ enum Cardinal {
     EAST = 1,
     SOUTH = 2,
     WEST = 3
+};
+
+enum Item {
+    NO_ITEM,
+    KEY
 };
 
 typedef struct GameStruct Game;
@@ -49,8 +55,8 @@ struct EntityStruct {
     int speed;
     Color color;
     int type;
-    void (*update)();
 };
+
 Entity Entity_create(Game *game);
 Entity Player_create(Game *game);
 
@@ -80,19 +86,9 @@ bool isSolid(Map *map, int x, int y);
 Vector2 Map_findRandomTile(Map *map, int tile_type);
 
 Map Map_createLab();
-Map Map_createPuzzleDungeon();
 
 void Map_perlinify(Map *map, int seed);
 void Map_enhanceForests(Map *map);
-
-typedef struct PuzzleRoomStruct PuzzleRoom;
-struct PuzzleRoomStruct {
-    int entrance; // Represents room index in PuzzleBoxStruct of the room that led to this one
-    int neighbors[4]; // Index should be NORTH, EAST, SOUTH, or WEST. Value represents room index in PuzzleBoxStruct
-    int lock_type;
-    int puzzle_type;
-    int x, y;
-};
 
 typedef struct PuzzleBoxStruct PuzzleBox;
 struct PuzzleBoxStruct {
@@ -103,6 +99,14 @@ struct PuzzleBoxStruct {
     int x[20];
     int y[20];
 };
+
+typedef struct MapAndDataStruct MapAndData;
+struct MapAndDataStruct {
+    Map map;
+    PuzzleBox puzzlebox;
+};
+
+MapAndData Map_createPuzzleDungeon();
 
 PuzzleBox PuzzleBox_create();
 #endif

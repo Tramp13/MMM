@@ -101,7 +101,7 @@ int getNorthWestTile(Map *map, int x, int y) {
 bool isSolid(Map *map, int x, int y) {
     int tile = getTile(map, x, y);
     if (tile == TREE || tile == FOREST_TREE || tile == DEEP_TREE ||
-        tile == STONE_WALL) {
+        tile == STONE_WALL || tile == LOCKED_DOOR) {
         return true;
     } else {
         return false;

@@ -111,7 +111,7 @@ int run()
         if (puzzle_type == NO_PUZZLE) {
             puzzle_char = '+';
         }
-        if (puzzle_type == KEY) {
+        if (puzzle_type == KEY_PUZZLE) {
             puzzle_char = 'K';
         }
         if (puzzle_type == FIGHT) {
